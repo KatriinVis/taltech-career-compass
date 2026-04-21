@@ -70,8 +70,8 @@ export default function Courses() {
       semester: c.semester,
       status: "planned",
     });
-    if (error) { toast({ title: "Viga", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Lisatud õppekavasse", description: `${c.code} · ${c.name}` });
+    if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Added to programme", description: `${c.code} · ${c.name}` });
   };
 
   const load = async () => {
@@ -272,49 +272,49 @@ export default function Courses() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><BookOpen className="size-4" /> Ainekataloog</CardTitle>
+          <CardTitle className="flex items-center gap-2"><BookOpen className="size-4" /> Course catalog</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex gap-1 bg-secondary rounded-md p-1">
               {(["all", "taltech", "euroteq"] as const).map((t) => (
                 <button key={t} onClick={() => { setTab(t); setCatPage(0); }} className={`px-3 py-1.5 text-sm rounded ${tab === t ? "bg-card shadow-sm" : "text-muted-foreground"}`}>
-                  {t === "all" ? "Kõik" : t === "taltech" ? "TalTech" : "EuroTeQ"}
+                  {t === "all" ? "All" : t === "taltech" ? "TalTech" : "EuroTeQ"}
                 </button>
               ))}
             </div>
-            <Input placeholder="Otsi koodi, nime järgi…" value={catQuery} onChange={(e) => { setCatQuery(e.target.value); setCatPage(0); }} />
+            <Input placeholder="Search by code or name…" value={catQuery} onChange={(e) => { setCatQuery(e.target.value); setCatPage(0); }} />
             {faculties.length > 0 && (
               <Select value={catFaculty ?? "__all__"} onValueChange={(v) => { setCatFaculty(v === "__all__" ? null : v); setCatPage(0); }}>
-                <SelectTrigger className="w-48"><SelectValue placeholder="Teaduskond" /></SelectTrigger>
+                <SelectTrigger className="w-48"><SelectValue placeholder="Faculty" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__all__">Kõik teaduskonnad</SelectItem>
+                  <SelectItem value="__all__">All faculties</SelectItem>
                   {faculties.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
                 </SelectContent>
               </Select>
             )}
           </div>
-          <div className="text-xs text-muted-foreground">{catTotal} ainet leitud · lehekülg {catPage + 1}/{Math.max(1, Math.ceil(catTotal / PAGE_SIZE))}</div>
+          <div className="text-xs text-muted-foreground">{catTotal} courses found · page {catPage + 1}/{Math.max(1, Math.ceil(catTotal / PAGE_SIZE))}</div>
           <div className="grid md:grid-cols-2 gap-3">
             {catRows.map((c) => (
               <div key={c.code} className="rounded-lg border p-3 flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <div className="font-medium text-sm truncate">{c.name}</div>
-                  <div className="text-xs font-mono text-muted-foreground">{c.code} · {c.ects ?? "?"} EAP · {c.faculty ?? c.source}</div>
+                  <div className="text-xs font-mono text-muted-foreground">{c.code} · {c.ects ?? "?"} ECTS · {c.faculty ?? c.source}</div>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => addToCurriculum(c)} title="Lisa minu õppekavasse">
-                  <Plus className="size-3 mr-1" /> Lisa
+                <Button size="sm" variant="outline" onClick={() => addToCurriculum(c)} title="Add to my programme">
+                  <Plus className="size-3 mr-1" /> Add
                 </Button>
               </div>
             ))}
-            {!catLoading && catRows.length === 0 && <div className="text-sm text-muted-foreground">Ei leitud.</div>}
+            {!catLoading && catRows.length === 0 && <div className="text-sm text-muted-foreground">No matches.</div>}
           </div>
           <div className="flex justify-center gap-2">
             <Button size="sm" variant="outline" disabled={catPage === 0} onClick={() => setCatPage((p) => p - 1)}>
-              <ChevronLeft className="size-4" /> Eelmine
+              <ChevronLeft className="size-4" /> Previous
             </Button>
             <Button size="sm" variant="outline" disabled={(catPage + 1) * PAGE_SIZE >= catTotal} onClick={() => setCatPage((p) => p + 1)}>
-              Järgmine <ChevronRight className="size-4" />
+              Next <ChevronRight className="size-4" />
             </Button>
           </div>
         </CardContent>

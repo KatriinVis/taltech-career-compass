@@ -46,12 +46,12 @@ export default function SyllabusUploader({ onSaved }: { onSaved?: () => void }) 
         if (error) throw error;
         const ext = data?.extracted ?? {};
         if (!ext.code) {
-          toast({ title: `${f.name}: ei suutnud koodi tuvastada`, variant: "destructive" });
+          toast({ title: `${f.name}: could not detect course code`, variant: "destructive" });
           continue;
         }
         next.push({ filename: f.name, status: "planned", data: ext, raw_text: raw });
       } catch (e: any) {
-        toast({ title: `${f.name}: parsimine ebaõnnestus`, description: e.message ?? String(e), variant: "destructive" });
+        toast({ title: `${f.name}: parsing failed`, description: e.message ?? String(e), variant: "destructive" });
       }
     }
     setItems((prev) => [...prev, ...next]);
@@ -83,8 +83,8 @@ export default function SyllabusUploader({ onSaved }: { onSaved?: () => void }) 
       source_filename: it.filename,
     }));
     const { error } = await supabase.from("user_courses").upsert(rows, { onConflict: "user_id,code" });
-    if (error) return toast({ title: "Salvestamine ebaõnnestus", description: error.message, variant: "destructive" });
-    toast({ title: `Salvestatud ${rows.length} ainet` });
+    if (error) return toast({ title: "Save failed", description: error.message, variant: "destructive" });
+    toast({ title: `Saved ${rows.length} courses` });
     setItems([]);
     onSaved?.();
   };
@@ -92,7 +92,7 @@ export default function SyllabusUploader({ onSaved }: { onSaved?: () => void }) 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Minu õppekava — ainekavade üleslaadimine</CardTitle>
+        <CardTitle>My programme — upload syllabi</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div
@@ -105,8 +105,8 @@ export default function SyllabusUploader({ onSaved }: { onSaved?: () => void }) 
           }`}
         >
           <Upload className="size-8 mx-auto mb-2 text-muted-foreground" />
-          <div className="text-sm font-medium">Lohista ainekavad siia või klõpsa</div>
-          <div className="text-xs text-muted-foreground mt-1">RTF, PDF, DOCX, TXT — mitu faili korraga</div>
+          <div className="text-sm font-medium">Drop syllabi here or click to choose</div>
+          <div className="text-xs text-muted-foreground mt-1">RTF, PDF, DOCX, TXT — multiple files at once</div>
           <input
             ref={inputRef}
             type="file"
@@ -119,13 +119,13 @@ export default function SyllabusUploader({ onSaved }: { onSaved?: () => void }) 
 
         {parsing && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" /> Parsime ainekavasid…
+            <Loader2 className="size-4 animate-spin" /> Parsing syllabi…
           </div>
         )}
 
         {items.length > 0 && (
           <div className="space-y-2">
-            <div className="text-sm font-medium">Eelvaade ({items.length})</div>
+            <div className="text-sm font-medium">Preview ({items.length})</div>
             {items.map((it, i) => (
               <div key={i} className="border rounded-md p-3 space-y-2">
                 <div className="flex items-start gap-3">
@@ -134,7 +134,7 @@ export default function SyllabusUploader({ onSaved }: { onSaved?: () => void }) 
                       {it.data.code} · {it.data.name_et || it.data.name_en}
                     </div>
                     <div className="text-xs text-muted-foreground flex flex-wrap gap-2 mt-1">
-                      {it.data.ects != null && <span>{it.data.ects} EAP</span>}
+                      {it.data.ects != null && <span>{it.data.ects} ECTS</span>}
                       {it.data.semester && <span>· {it.data.semester}</span>}
                       {it.data.assessment && <span>· {it.data.assessment}</span>}
                       <span className="opacity-60">· {it.filename}</span>
@@ -151,9 +151,9 @@ export default function SyllabusUploader({ onSaved }: { onSaved?: () => void }) 
                   >
                     <SelectTrigger className="w-32 h-8 text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="completed">Läbitud</SelectItem>
-                      <SelectItem value="in_progress">Pooleli</SelectItem>
-                      <SelectItem value="planned">Plaanis</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="in_progress">In progress</SelectItem>
+                      <SelectItem value="planned">Planned</SelectItem>
                     </SelectContent>
                   </Select>
                   <Button size="sm" variant="ghost" onClick={() => setItems((prev) => prev.filter((_, idx) => idx !== i))}>
@@ -163,8 +163,8 @@ export default function SyllabusUploader({ onSaved }: { onSaved?: () => void }) 
               </div>
             ))}
             <div className="flex gap-2 pt-2">
-              <Button onClick={saveAll}><Check className="size-4 mr-1" /> Salvesta kõik ({items.length})</Button>
-              <Button variant="ghost" onClick={() => setItems([])}>Tühista</Button>
+              <Button onClick={saveAll}><Check className="size-4 mr-1" /> Save all ({items.length})</Button>
+              <Button variant="ghost" onClick={() => setItems([])}>Cancel</Button>
             </div>
           </div>
         )}

@@ -75,7 +75,7 @@ export default function Dashboard() {
             <div className="h-2 bg-secondary rounded-full overflow-hidden">
               <div className="h-full bg-primary transition-all" style={{ width: `${progressPct}%` }} />
             </div>
-            <p className="text-xs text-muted-foreground mt-2">Pooleli: {inProgress} ainet</p>
+            <p className="text-xs text-muted-foreground mt-2">In progress: {inProgress} courses</p>
           </CardContent>
         </Card>
         <Card>
