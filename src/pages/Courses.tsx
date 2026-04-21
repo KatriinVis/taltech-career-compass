@@ -90,6 +90,15 @@ export default function Courses() {
     toast({ title: "Added to programme", description: `${c.code} · ${c.name}` });
   };
 
+  const handleAddCatalog = (c: CatalogCourse) => {
+    const fit = checkFit(c, events as any);
+    if (fit.status === "conflicts") {
+      setPendingConflict({ course: c, titles: fit.with });
+      return;
+    }
+    addToCurriculum(c);
+  };
+
   const load = async () => {
     if (!user) return;
     const [ev, cp] = await Promise.all([
