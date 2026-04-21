@@ -1,34 +1,28 @@
 
 
-# Force English + "you" form for CV analysis and career reasoning
+# Translate gap pill contents to short English skill names
 
-The "reasoning" paragraph on each ranked career card is still showing Estonian, third-person text (e.g. *"Katriinil on tugev projektijuhtimise…"*). Root cause: the CV is in Estonian, so `analyze-cv` stores Estonian `summary`/`experience`, and `match-career` then echoes that language back even though its own prompt says English.
+The "You're missing:" pills under each ranked path still contain long Estonian sentences (e.g. *"puudub CV-s selge tooteanalüütika/metrics…"*) instead of short English skill labels like "Product analytics", "UX design".
 
-Fix both edge functions so all stored + displayed text is English, second-person.
+Root cause: even though `match-career`'s prompt asks for short English gap names, the model occasionally returns full Estonian sentences. The schema description doesn't enforce it strongly enough, and there's no client-side guard.
 
 ## Changes
 
-### `supabase/functions/analyze-cv/index.ts`
-- Update system prompt to require English output regardless of input language:
-  - "Always write `summary`, `experience`, `education`, and `interests` in English, even if the CV is in another language. Translate Estonian (or any non-English) content to English before returning."
-- No schema change.
-
 ### `supabase/functions/match-career/index.ts`
-- Strengthen system prompt:
-  - "Always write in English, even if the CV, interests, or any other input is in another language (e.g. Estonian)."
-  - "Address the user directly as 'you' (e.g. 'You already have…', 'You still need…'). Never use third-person ('the student', 'the candidate', or the user's name)."
-  - "Gaps must be short English skill names like 'SQL', 'Statistics', 'Public speaking' — never Estonian, never full sentences."
-- No schema change.
+- Tighten the `gaps` schema:
+  - Add per-item `description`: *"Short English skill label (e.g. 'SQL', 'Public speaking', 'Distributed systems'). Never use Estonian, never full sentences."*
+  - Update outer `gaps` description: *"Skills you still need to build, as short English skill names."*
+- Reinforce in system prompt: *"Each gap MUST be 1–4 English words naming a skill or topic. Never write a sentence. Never write Estonian. If unsure, output the closest English skill name."*
 
 ### Deploy
-- Redeploy both edge functions.
+- Redeploy `match-career`.
 
-## How the user verifies
-1. Open Career page.
-2. Click **Run AI analysis** again to regenerate the analysis with the new prompts.
-3. The reasoning text and gap pills on each card should now be in English, addressing them as "you".
+## How to verify
+1. Open `/career`.
+2. Click **Run AI analysis** again.
+3. Pills under "You're missing:" should now read like *"Product analytics"*, *"UX design"*, *"Conversion metrics"* — short English phrases, not Estonian sentences.
 
 ## Out of scope
-- Backfilling old `cv_uploads` / `career_plans` rows (newest insert wins on load, so re-running analysis is enough).
-- Changing UI components or schema.
+- Backfilling old `career_plans` rows (newest insert wins).
+- UI/layout changes.
 
