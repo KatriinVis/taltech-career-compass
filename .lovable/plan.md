@@ -1,33 +1,29 @@
 
 
-# Tick off completed assignments in Timetable
+# Force English output in Career path analysis
 
-Add a checkbox next to each item in the "All upcoming items" list on `/timetable`, so the user can mark assignments (and any other event) as done. Done items show with a strikethrough and dimmed text, and stay in the list (so they can be unchecked) but are visually de-emphasized.
+The `match-career` edge function ranks paths and returns `reasoning` + `gaps` from the LLM. When the CV is in Estonian, the model mirrors the input language and returns Estonian gap labels and reasoning. Fix is to instruct the model explicitly to always respond in English regardless of input language.
 
 ## Changes
 
-### 1. Database
-Migration on `schedule_events`:
-- Add `completed_at timestamptz NULL` (nullable; `NULL` = not done, timestamp = done at that time)
+### `supabase/functions/match-career/index.ts`
+Update the system prompt to force English output:
 
-Existing RLS (`events_own_all`) already covers updates — no policy changes needed.
+> "You are a TalTech career advisor. Rank the top 3-5 career paths for this student. Use explainable reasoning citing specific CV signals + interests. Be honest about gaps. **Always respond in English, even if the CV, interests, or any other input is written in another language (e.g. Estonian). All `reasoning` text and every item in `gaps` must be written in natural English.**"
 
-### 2. UI — `src/pages/Timetable.tsx`
-In the "All upcoming items" list:
-- Add a `<Checkbox>` (already in `src/components/ui/checkbox.tsx`) on the left of each row
-- Checked state = `event.completed_at !== null`
-- On toggle: `supabase.from("schedule_events").update({ completed_at: checked ? new Date().toISOString() : null }).eq("id", id)`, then refresh local state optimistically
-- When done: apply `line-through text-muted-foreground` to the title/meta
-- Keep the existing delete button
+Also tighten the tool schema descriptions to reinforce the rule:
+- `reasoning.description`: "1-3 sentences in English explaining the match using CV+interests evidence."
+- `gaps.items.description` (add): "Short English skill label (e.g. 'SQL', 'Public speaking', 'Distributed systems'). Never use Estonian."
 
-### 3. Week & month grid
-Items already rendered in the week grid and month drawer get the same treatment: completed items render with strikethrough + reduced opacity so the user sees progress at a glance. No checkbox in the grid cells (too cramped) — only in the list and drawer.
+### `supabase/functions/analyze-cv/index.ts`
+Same fix on the CV extractor so downstream `summary` and `interests` arrays are also normalized to English (skill tags are already kebab-case English, but `summary`, `experience`, `education`, `interests` can leak Estonian):
 
-### 4. Types
-`src/integrations/supabase/types.ts` regenerates automatically after the migration; no manual edit.
+> Append to system prompt: "Always write `summary`, `experience`, `education`, and `interests` in English, even if the CV is in another language. Translate Estonian content to English before returning."
+
+### Existing data
+Old `career_plans` rows already saved with Estonian text stay as-is (no migration). Next time the user clicks "Run AI analysis" the new English output replaces the displayed ranking. No DB schema changes.
 
 ## Out of scope
-- Filtering completed items out of the list (kept visible, just dimmed)
-- Streaks / completion stats on Dashboard (can be a follow-up)
-- Bulk "mark all done" actions
+- Translating already-stored Estonian plans retroactively
+- Adding a UI language toggle (EN is the only app language now)
 
