@@ -167,7 +167,7 @@ export default function Career() {
 
       {(skills.length > 0 || ranked.length > 0) && (
         <Card>
-          <CardHeader><CardTitle>Bottle Diagram</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Closing your career gap</CardTitle></CardHeader>
           <CardContent>
             <BottleDiagram skills={skills} interests={interests} paths={ranked.map((r) => r.name)} goal={selected} />
           </CardContent>
