@@ -159,28 +159,28 @@ export default function Programme() {
   const pct = Math.min(100, Math.round((earned / Math.max(1, targetEcts)) * 100));
 
   const groups: { key: UC["status"]; title: string; tone: string }[] = [
-    { key: "completed", title: "Läbitud", tone: "bg-primary/10 border-primary/30" },
-    { key: "in_progress", title: "Pooleli", tone: "bg-secondary border-border" },
-    { key: "planned", title: "Plaanis", tone: "bg-muted border-border" },
+    { key: "completed", title: "Completed", tone: "bg-primary/10 border-primary/30" },
+    { key: "in_progress", title: "In progress", tone: "bg-secondary border-border" },
+    { key: "planned", title: "Planned", tone: "bg-muted border-border" },
   ];
 
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
-        <h1 className="font-display text-3xl">Minu õppekava</h1>
-        <p className="text-muted-foreground">Sinu isiklikud ained, mille oled MESA.I-sse üles laadinud.</p>
+        <h1 className="font-display text-3xl">My programme</h1>
+        <p className="text-muted-foreground">Your personal courses uploaded into MESA.I.</p>
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Õppekava sihtmärk</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Programme target</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
-            <div><Label>Programmi kood</Label><Input value={progCode} onChange={(e) => setProgCode(e.target.value)} placeholder="TATM" /></div>
-            <div><Label>Programmi nimi</Label><Input value={progName} onChange={(e) => setProgName(e.target.value)} placeholder="Tehnoloogia ja juhtimine, MA" /></div>
-            <div><Label>Sihtmärk EAP</Label><Input type="number" value={targetEcts} onChange={(e) => setTargetEcts(Number(e.target.value))} /></div>
-            <div><Label>Planeeritud lõpetamine</Label><Input type="date" value={targetGrad ?? ""} onChange={(e) => setTargetGrad(e.target.value)} /></div>
+            <div><Label>Programme code</Label><Input value={progCode} onChange={(e) => setProgCode(e.target.value)} placeholder="TATM" /></div>
+            <div><Label>Programme name</Label><Input value={progName} onChange={(e) => setProgName(e.target.value)} placeholder="Technology Governance, MA" /></div>
+            <div><Label>Target ECTS</Label><Input type="number" value={targetEcts} onChange={(e) => setTargetEcts(Number(e.target.value))} /></div>
+            <div><Label>Planned graduation</Label><Input type="date" value={targetGrad ?? ""} onChange={(e) => setTargetGrad(e.target.value)} /></div>
           </div>
-          <Button onClick={saveProfile}>Salvesta</Button>
+          <Button onClick={saveProfile}>Save</Button>
         </CardContent>
       </Card>
 
