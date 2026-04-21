@@ -68,6 +68,83 @@ export type Database = {
         }
         Relationships: []
       }
+      course_skills: {
+        Row: {
+          course_code: string
+          skill: string
+        }
+        Insert: {
+          course_code: string
+          skill: string
+        }
+        Update: {
+          course_code?: string
+          skill?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "course_skills_course_code_fkey"
+            columns: ["course_code"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      courses: {
+        Row: {
+          code: string
+          day: number | null
+          description: string | null
+          ects: number | null
+          end: string | null
+          format: string | null
+          last_synced_at: string
+          name: string
+          required: boolean | null
+          room: string | null
+          semester: string | null
+          source: string
+          start: string | null
+          university: string | null
+          url: string | null
+        }
+        Insert: {
+          code: string
+          day?: number | null
+          description?: string | null
+          ects?: number | null
+          end?: string | null
+          format?: string | null
+          last_synced_at?: string
+          name: string
+          required?: boolean | null
+          room?: string | null
+          semester?: string | null
+          source: string
+          start?: string | null
+          university?: string | null
+          url?: string | null
+        }
+        Update: {
+          code?: string
+          day?: number | null
+          description?: string | null
+          ects?: number | null
+          end?: string | null
+          format?: string | null
+          last_synced_at?: string
+          name?: string
+          required?: boolean | null
+          room?: string | null
+          semester?: string | null
+          source?: string
+          start?: string | null
+          university?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
       cv_uploads: {
         Row: {
           created_at: string
@@ -197,6 +274,39 @@ export type Database = {
           updated_at?: string
           user_id?: string
           workload_target?: number | null
+        }
+        Relationships: []
+      }
+      sync_runs: {
+        Row: {
+          error: string | null
+          failed: number | null
+          finished_at: string
+          id: string
+          inserted: number | null
+          source: string
+          status: string
+          updated: number | null
+        }
+        Insert: {
+          error?: string | null
+          failed?: number | null
+          finished_at?: string
+          id?: string
+          inserted?: number | null
+          source: string
+          status: string
+          updated?: number | null
+        }
+        Update: {
+          error?: string | null
+          failed?: number | null
+          finished_at?: string
+          id?: string
+          inserted?: number | null
+          source?: string
+          status?: string
+          updated?: number | null
         }
         Relationships: []
       }
