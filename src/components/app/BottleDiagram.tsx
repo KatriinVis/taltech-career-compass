@@ -33,9 +33,7 @@ export default function BottleDiagram({ skills, interests, paths, goal }: Props)
   ];
 
   return (
-    <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-foreground">Choose your goal</h3>
-      <div className="grid md:grid-cols-[1fr_240px] gap-6 items-start">
+    <div className="grid md:grid-cols-[1fr_240px] gap-6 items-start">
         <svg viewBox="0 0 400 300" className="w-full h-auto">
         <defs>
           <linearGradient id="fnl" x1="0" y1="0" x2="0" y2="1">
@@ -94,7 +92,6 @@ export default function BottleDiagram({ skills, interests, paths, goal }: Props)
           <div className="text-sm text-muted-foreground">Click any layer to see what was filtered and why.</div>
           )}
         </div>
-      </div>
     </div>
   );
 }
