@@ -175,7 +175,9 @@ export default function Career() {
       )}
 
       {ranked.length > 0 && (
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-3">
+          <h2 className="text-xl font-semibold">Choose your goal</h2>
+          <div className="grid md:grid-cols-2 gap-4">
           {ranked.map((r) => {
             const path = courseProvider.paths().find((p) => p.name === r.name);
             const isSelected = selected === r.name;
@@ -214,6 +216,7 @@ export default function Career() {
               </Card>
             );
           })}
+          </div>
         </div>
       )}
     </div>
