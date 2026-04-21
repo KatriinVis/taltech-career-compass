@@ -7,14 +7,15 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const { notes = "", risk = 0, career = null } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    const AZURE_OPENAI_API_KEY = Deno.env.get("AZURE_OPENAI_API_KEY");
+    const AZURE_OPENAI_ENDPOINT = Deno.env.get("AZURE_OPENAI_ENDPOINT");
+    if (!AZURE_OPENAI_API_KEY || !AZURE_OPENAI_ENDPOINT) throw new Error("Azure OpenAI not configured");
+    const url = `${AZURE_OPENAI_ENDPOINT.replace(/\/$/, "")}/openai/deployments/gpt-5.4-nano/chat/completions?api-version=2025-01-01-preview`;
 
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const resp = await fetch(url, {
       method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+      headers: { "api-key": AZURE_OPENAI_API_KEY, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: "You are an empathetic study coach for TalTech students. Reply in 3-5 sentences with a concrete next action." },
           { role: "user", content: `Career goal: ${career ?? "not chosen"}.\nRetention risk: ${risk}/100.\nStudent notes: ${notes}` },
