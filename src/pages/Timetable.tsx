@@ -435,7 +435,7 @@ export default function Timetable() {
       {/* Syllabi */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><BookOpen className="size-4 text-primary" /> Syllabi</CardTitle>
+          <CardTitle className="flex items-center gap-2"><BookOpen className="size-4 text-primary" /> Syllabi of elective courses</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           {scheduledCourses.length === 0 ? (
