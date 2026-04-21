@@ -133,7 +133,7 @@ export default function Career() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Career alignment</h1>
-        <p className="text-muted-foreground">Map your CV and interests to ranked career paths — with explainable reasoning.</p>
+        <p className="text-muted-foreground">You can map your CV and interests to ranked career paths — with clear reasoning you can follow.</p>
       </div>
 
       <Card>
