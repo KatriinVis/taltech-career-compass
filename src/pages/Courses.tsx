@@ -27,6 +27,37 @@ import {
 
 const DAY_NAMES = ["", "Mon", "Tue", "Wed", "Thu", "Fri"];
 
+function FitBadge({ fit }: { fit: FitResult }) {
+  if (fit.status === "unknown") {
+    return (
+      <Badge variant="secondary" className="text-[10px] font-normal">
+        <Globe className="size-3 mr-1" /> Time TBD
+      </Badge>
+    );
+  }
+  if (fit.status === "fits") {
+    return (
+      <Badge className="text-[10px] font-normal bg-success/15 text-success hover:bg-success/15 border-transparent">
+        <Check className="size-3 mr-1" /> Fits your schedule
+      </Badge>
+    );
+  }
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge className="text-[10px] font-normal bg-destructive/15 text-destructive hover:bg-destructive/15 border-transparent cursor-help">
+            <AlertTriangle className="size-3 mr-1" /> Conflicts with {fit.with[0]}{fit.with.length > 1 ? ` +${fit.with.length - 1}` : ""}
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent>
+          Conflicts with: {fit.with.slice(0, 3).join(", ")}{fit.with.length > 3 ? "…" : ""}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 export default function Courses() {
   const { user } = useAuth();
   const [q, setQ] = useState("");
