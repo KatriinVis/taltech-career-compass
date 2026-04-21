@@ -98,7 +98,98 @@ type Course = {
   room?: string | null; format?: string | null; university?: string | null;
   source: "taltech" | "euroteq"; description?: string | null; url?: string | null;
   skills: string[];
+  name_en?: string | null; level?: string | null; language?: string[] | null;
+  faculty?: string | null; assessment?: string | null;
+  learning_outcomes?: string[] | null; instructor?: string | null;
 };
+
+function parseOisCourse(md: string, url: string): Course | null {
+  if (!md || md.length < 100) return null;
+  // Aine kood URL-ist või tekstist
+  const codeFromUrl = url.match(/\/aine\/([A-Z]{2,4}\d{3,5})/);
+  const codeFromText = md.match(/\b([A-Z]{2,4}[89]\d{3})\b/);
+  const code = (codeFromUrl?.[1] || codeFromText?.[1] || "").toUpperCase();
+  if (!code || !isMscCode(code)) return null;
+
+  // Pealkiri (esimene H1)
+  const titleMatch = md.match(/^#\s+(.+)$/m);
+  const fullTitle = titleMatch?.[1]?.trim() || code;
+  // Eesti / inglise nimi: "ETnimi / ENname" või eraldi read
+  const nameSplit = fullTitle.split(/\s*\/\s*/);
+  const name = nameSplit[0].replace(new RegExp(`^${code}\\s*[-–]?\\s*`), "").trim();
+  const name_en = nameSplit[1]?.trim() || null;
+
+  const ectsMatch = md.match(/(\d+(?:[.,]\d+)?)\s*EAP/i) || md.match(/(\d+(?:[.,]\d+)?)\s*ECTS/i);
+  const semMatch = md.match(/\b(sügis|kevad|sügis-kevad|autumn|spring)\b/i);
+  const assessMatch = md.match(/\b(eksam|arvestus|hindeline arvestus|exam|pass\/fail)\b/i);
+  const langs: string[] = [];
+  if (/\beesti\b|\bestonian\b/i.test(md)) langs.push("et");
+  if (/\binglise\b|\benglish\b/i.test(md)) langs.push("en");
+
+  // Õpiväljundid (lühike heuristika)
+  const loSection = md.match(/(?:õpiväljundid|learning outcomes)[\s\S]{0,2000}/i)?.[0] ?? "";
+  const learning_outcomes = loSection
+    .split(/\n[-*•]\s+|\n\d+[\.)]\s+/)
+    .slice(1, 12)
+    .map((s) => s.split("\n")[0].trim())
+    .filter((s) => s.length > 10 && s.length < 300);
+
+  const instructor = md.match(/(?:õppejõud|instructor|lecturer)[:\s]+([^\n]{3,80})/i)?.[1]?.trim() || null;
+
+  return {
+    code,
+    name,
+    name_en,
+    ects: ectsMatch ? Number(ectsMatch[1].replace(",", ".")) : null,
+    semester: semMatch?.[1]?.toLowerCase() || null,
+    assessment: assessMatch?.[1]?.toLowerCase() || null,
+    language: langs.length ? langs : null,
+    learning_outcomes: learning_outcomes.length ? learning_outcomes : null,
+    instructor,
+    level: "msc",
+    faculty: facultyFromCode(code),
+    source: "taltech",
+    url,
+    description: md.slice(0, 1500),
+    skills: deriveSkills(md + " " + (learning_outcomes?.join(" ") ?? "")),
+  };
+}
+
+async function syncMscPrefix(
+  supabase: ReturnType<typeof createClient>,
+  prefix: string,
+): Promise<{ prefix: string; inserted: number; failed: number; error?: string }> {
+  try {
+    const searchUrl = `https://ois2.taltech.ee/uusois/aine/otsi?kood=${prefix}`;
+    const eq = await firecrawlCrawl(searchUrl, {
+      limit: 100,
+      includePaths: [`.*aine/${prefix}.*`],
+    });
+    const pages = (eq.data || []).map((d: any) => ({
+      url: d.metadata?.sourceURL || d.metadata?.url || "",
+      markdown: d.markdown || "",
+    }));
+    const courses: Course[] = [];
+    const seen = new Set<string>();
+    for (const p of pages) {
+      const c = parseOisCourse(p.markdown, p.url);
+      if (c && !seen.has(c.code)) {
+        seen.add(c.code);
+        courses.push(c);
+      }
+    }
+    const r = await upsertCourses(supabase, courses, "taltech");
+    await supabase.from("sync_runs").insert({
+      source: "taltech", status: "ok", inserted: r.inserted, failed: r.failed, prefix,
+    });
+    return { prefix, inserted: r.inserted, failed: r.failed };
+  } catch (e: any) {
+    await supabase.from("sync_runs").insert({
+      source: "taltech", status: "error", error: String(e.message || e), prefix,
+    });
+    return { prefix, inserted: 0, failed: 0, error: String(e.message || e) };
+  }
+}
 
 function parseTalTech(markdown: string): Course[] {
   // tunniplaan rows look like:  CODE  Course Name  Mon 10:00-12:00  ROOM-101
