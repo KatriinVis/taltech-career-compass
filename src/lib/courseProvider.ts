@@ -49,6 +49,12 @@ export type SyncStatus = {
 
 let cache: Course[] | null = null;
 let cachePromise: Promise<Course[]> | null = null;
+const subscribers = new Set<() => void>();
+
+export function subscribeCourses(cb: () => void): () => void {
+  subscribers.add(cb);
+  return () => subscribers.delete(cb);
+}
 
 async function loadCourses(): Promise<Course[]> {
   if (cache) return cache;
@@ -79,6 +85,7 @@ async function loadCourses(): Promise<Course[]> {
       skills: skillMap.get(r.code) ?? [],
     }));
     cache = list;
+    subscribers.forEach((cb) => cb());
     return list;
   })();
   return cachePromise;
@@ -87,6 +94,7 @@ async function loadCourses(): Promise<Course[]> {
 export function invalidateCourseCache() {
   cache = null;
   cachePromise = null;
+  loadCourses().catch(() => {});
 }
 
 export async function fetchSyncStatus(): Promise<SyncStatus> {
