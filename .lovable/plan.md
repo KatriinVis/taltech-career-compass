@@ -1,29 +1,22 @@
 
 
-# Force English output in Career path analysis
+# Show all upcoming items by default on Timetable
 
-The `match-career` edge function ranks paths and returns `reasoning` + `gaps` from the LLM. When the CV is in Estonian, the model mirrors the input language and returns Estonian gap labels and reasoning. Fix is to instruct the model explicitly to always respond in English regardless of input language.
+Currently the "All upcoming items" list on `/timetable` is capped (likely sliced or scroll-clipped), so the user can't see every upcoming deadline/event without extra interaction.
 
-## Changes
+## Change
 
-### `supabase/functions/match-career/index.ts`
-Update the system prompt to force English output:
+### `src/pages/Timetable.tsx` — "All upcoming items" card
+- Remove any `.slice(0, N)` cap on the rendered list so every future item is included.
+- Remove the fixed-height `ScrollArea` / `max-h-*` wrapper around the list so the card grows to fit all rows naturally on the page.
+- Keep sort order: ascending by due date / start time, with completed items still visible (dimmed + strikethrough) at their chronological position.
+- Add a small count badge in the card header: "All upcoming items (N)" so the user immediately sees the total.
 
-> "You are a TalTech career advisor. Rank the top 3-5 career paths for this student. Use explainable reasoning citing specific CV signals + interests. Be honest about gaps. **Always respond in English, even if the CV, interests, or any other input is written in another language (e.g. Estonian). All `reasoning` text and every item in `gaps` must be written in natural English.**"
-
-Also tighten the tool schema descriptions to reinforce the rule:
-- `reasoning.description`: "1-3 sentences in English explaining the match using CV+interests evidence."
-- `gaps.items.description` (add): "Short English skill label (e.g. 'SQL', 'Public speaking', 'Distributed systems'). Never use Estonian."
-
-### `supabase/functions/analyze-cv/index.ts`
-Same fix on the CV extractor so downstream `summary` and `interests` arrays are also normalized to English (skill tags are already kebab-case English, but `summary`, `experience`, `education`, `interests` can leak Estonian):
-
-> Append to system prompt: "Always write `summary`, `experience`, `education`, and `interests` in English, even if the CV is in another language. Translate Estonian content to English before returning."
-
-### Existing data
-Old `career_plans` rows already saved with Estonian text stay as-is (no migration). Next time the user clicks "Run AI analysis" the new English output replaces the displayed ranking. No DB schema changes.
+### Optional polish (same card)
+- If the list grows very long, add a lightweight "Hide completed" toggle in the header (default: off → everything visible). No filtering otherwise.
 
 ## Out of scope
-- Translating already-stored Estonian plans retroactively
-- Adding a UI language toggle (EN is the only app language now)
+- Week/month grid views (unchanged)
+- Pagination — full list is the goal
+- Server-side limits (the query already returns all rows for the user; only the UI is clipping)
 
