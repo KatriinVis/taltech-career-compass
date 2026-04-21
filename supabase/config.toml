@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.sync-courses]
 verify_jwt = false
+
+[functions.parse-syllabus]
+verify_jwt = false
