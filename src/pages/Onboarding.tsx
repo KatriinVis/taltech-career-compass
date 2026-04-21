@@ -15,6 +15,14 @@ const INTERESTS = [
   "Entrepreneurship", "Research",
 ];
 
+type Extracted = {
+  summary?: string;
+  skills?: string[];
+  experience?: string[];
+  education?: string[];
+  interests?: string[];
+};
+
 export default function Onboarding() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -25,9 +33,34 @@ export default function Onboarding() {
   const [interests, setInterests] = useState<string[]>([]);
   const [cv, setCv] = useState("");
   const [saving, setSaving] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [extracted, setExtracted] = useState<Extracted | null>(null);
 
   const toggle = (i: string) =>
     setInterests((prev) => prev.includes(i) ? prev.filter((x) => x !== i) : [...prev, i]);
+
+  const analyzePreview = async () => {
+    if (cv.trim().length < 50) {
+      toast({ title: "Add more detail", description: "Paste at least 50 characters of CV text.", variant: "destructive" });
+      return;
+    }
+    setAnalyzing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("analyze-cv", { body: { raw_text: cv } });
+      if (error) throw error;
+      setExtracted(data?.extracted ?? {});
+      setStep(4);
+    } catch (e: any) {
+      toast({ title: "Analysis failed", description: e.message, variant: "destructive" });
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const skipPreview = () => {
+    setExtracted(null);
+    setStep(4);
+  };
 
   const finish = async () => {
     if (!user) return;
@@ -44,14 +77,18 @@ export default function Onboarding() {
       if (pErr) throw pErr;
 
       if (cv.trim().length > 50) {
-        const { data, error } = await supabase.functions.invoke("analyze-cv", {
-          body: { raw_text: cv },
-        });
-        if (error) throw error;
+        let ext = extracted;
+        if (!ext) {
+          const { data, error } = await supabase.functions.invoke("analyze-cv", {
+            body: { raw_text: cv },
+          });
+          if (error) throw error;
+          ext = data?.extracted ?? {};
+        }
         await supabase.from("cv_uploads").insert({
           user_id: user.id,
           raw_text: cv,
-          extracted: data?.extracted ?? {},
+          extracted: ext ?? {},
         });
       }
       toast({ title: "You're all set!", description: "Let's see your dashboard." });
@@ -63,6 +100,15 @@ export default function Onboarding() {
     }
   };
 
+  // Confidence: heuristic based on CV length and field coverage
+  const confidence = (() => {
+    if (!extracted) return 0;
+    const fields = [extracted.summary, extracted.skills?.length, extracted.experience?.length, extracted.education?.length];
+    const filled = fields.filter(Boolean).length;
+    const lengthScore = Math.min(cv.length / 1200, 1);
+    return Math.round(((filled / 4) * 0.7 + lengthScore * 0.3) * 100);
+  })();
+
   return (
     <div className="min-h-screen bg-background grid place-items-center p-6">
       <div className="w-full max-w-xl rounded-xl border bg-card p-8" style={{ boxShadow: "var(--shadow-elegant)" }}>
@@ -73,7 +119,7 @@ export default function Onboarding() {
           <div className="font-semibold">Welcome — let's set you up</div>
         </div>
         <div className="flex gap-2 mb-6">
-          {[1, 2, 3].map((s) => (
+          {[1, 2, 3, 4].map((s) => (
             <div key={s} className={`h-1.5 flex-1 rounded-full ${s <= step ? "bg-primary" : "bg-secondary"}`} />
           ))}
         </div>
