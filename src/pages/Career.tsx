@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { courseProvider } from "@/lib/courseProvider";
-import { Sparkles, Check } from "lucide-react";
+import { Sparkles, Check, Upload } from "lucide-react";
 import BottleDiagram from "@/components/app/BottleDiagram";
+import { extractTextFromFile } from "@/lib/cvExtract";
+import { useRef } from "react";
 
 type Ranked = { id: string; name: string; score: number; reasoning: string; gaps: string[] };
 
@@ -19,6 +21,8 @@ export default function Career() {
   const [ranked, setRanked] = useState<Ranked[]>([]);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -101,6 +105,28 @@ export default function Career() {
     toast({ title: `Selected ${r.name}`, description: "Timetable updated with recommended courses." });
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Max 5MB.", variant: "destructive" });
+      return;
+    }
+    setUploading(true);
+    try {
+      const text = await extractTextFromFile(file);
+      if (text.length < 50) throw new Error("Couldn't extract enough text from this file.");
+      setCv(text);
+      setExtracted(null);
+      toast({ title: "CV loaded", description: `${file.name} — ${text.length} characters extracted. Click "Run AI analysis" to update.` });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const skills: string[] = extracted?.skills ?? [];
 
   return (
@@ -113,6 +139,25 @@ export default function Career() {
       <Card>
         <CardHeader><CardTitle>Your CV</CardTitle></CardHeader>
         <CardContent className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.docx,.txt,.md,application/pdf,text/plain"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+            >
+              <Upload className="size-4" /> {uploading ? "Reading…" : "Upload CV (PDF, DOCX, TXT)"}
+            </Button>
+            <span className="text-xs text-muted-foreground">or paste below</span>
+          </div>
           <Textarea value={cv} onChange={(e) => setCv(e.target.value)} rows={6} placeholder="Paste your CV text here…" />
           <Button onClick={runAnalysis} disabled={loading || !cv.trim()}>
             <Sparkles className="size-4" /> {loading ? "Analyzing…" : "Run AI analysis"}
