@@ -64,7 +64,7 @@ export default function Career() {
         user_id: user.id, ranked: r, selected_path: r[0]?.name ?? null, reasoning: r[0]?.reasoning ?? null,
       });
       setSelected(r[0]?.name ?? null);
-      toast({ title: "Analysis complete", description: "We ranked the best career paths for you." });
+      toast({ title: "Analysis complete", description: "Here are the best career paths for you, ranked." });
     } catch (e: any) {
       const msg = e.message || "Something went wrong";
       if (msg.includes("429")) toast({ title: "Rate limited", description: "Try again in a moment.", variant: "destructive" });
@@ -102,7 +102,7 @@ export default function Career() {
         await supabase.from("schedule_events").insert(events);
       }
     }
-    toast({ title: `Selected ${r.name}`, description: "Timetable updated with recommended courses." });
+    toast({ title: `You picked ${r.name}`, description: "Your timetable is updated with the recommended courses." });
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,7 +118,7 @@ export default function Career() {
       if (text.length < 50) throw new Error("Couldn't extract enough text from this file.");
       setCv(text);
       setExtracted(null);
-      toast({ title: "CV loaded", description: `${file.name} — ${text.length} characters extracted. Click "Run AI analysis" to update.` });
+      toast({ title: "CV loaded", description: `We extracted ${text.length} characters from ${file.name}. Click "Run AI analysis" when you're ready.` });
     } catch (err: any) {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
     } finally {
@@ -133,7 +133,7 @@ export default function Career() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Career alignment</h1>
-        <p className="text-muted-foreground">Map your CV and interests to ranked career paths — with explainable reasoning.</p>
+        <p className="text-muted-foreground">You can map your CV and interests to ranked career paths — with clear reasoning you can follow.</p>
       </div>
 
       <Card>
@@ -156,9 +156,9 @@ export default function Career() {
             >
               <Upload className="size-4" /> {uploading ? "Reading…" : "Upload CV (PDF, DOCX, TXT)"}
             </Button>
-            <span className="text-xs text-muted-foreground">or paste below</span>
+            <span className="text-xs text-muted-foreground">or paste yours below</span>
           </div>
-          <Textarea value={cv} onChange={(e) => setCv(e.target.value)} rows={6} placeholder="Paste your CV text here…" />
+          <Textarea value={cv} onChange={(e) => setCv(e.target.value)} rows={6} placeholder="Paste your CV text here so we can analyze it…" />
           <Button onClick={runAnalysis} disabled={loading || !cv.trim()}>
             <Sparkles className="size-4" /> {loading ? "Analyzing…" : "Run AI analysis"}
           </Button>
@@ -193,7 +193,7 @@ export default function Career() {
                   <p className="text-sm text-muted-foreground">{r.reasoning}</p>
                   {r.gaps?.length > 0 && (
                     <div>
-                      <div className="text-xs font-medium text-muted-foreground mb-1">Gaps to close</div>
+                      <div className="text-xs font-medium text-muted-foreground mb-1">Gaps you should close</div>
                       <div className="flex flex-wrap gap-1.5">
                         {r.gaps.map((g) => <span key={g} className="text-xs px-2 py-0.5 rounded-full bg-secondary">{g}</span>)}
                       </div>
@@ -201,7 +201,7 @@ export default function Career() {
                   )}
                   {path && (
                     <div>
-                      <div className="text-xs font-medium text-muted-foreground mb-1">Recommended courses</div>
+                      <div className="text-xs font-medium text-muted-foreground mb-1">Courses we recommend for you</div>
                       <div className="flex flex-wrap gap-1.5">
                         {path.recommended_courses.map((code) => (
                           <span key={code} className="text-xs px-2 py-0.5 rounded-md bg-primary/10 text-primary font-mono">{code}</span>
