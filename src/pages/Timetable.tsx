@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -97,8 +97,8 @@ export default function Timetable() {
               <div className="bg-card p-2"></div>
               {DAYS.map((d) => <div key={d} className="bg-card p-2 font-medium text-center">{d}</div>)}
               {HOURS.map((h) => (
-                <>
-                  <div key={`h-${h}`} className="bg-card p-2 text-xs text-muted-foreground text-right">{h}:00</div>
+                <React.Fragment key={`row-${h}`}>
+                  <div className="bg-card p-2 text-xs text-muted-foreground text-right">{h}:00</div>
                   {DAYS.map((_, di) => {
                     const ev = eventAt(di + 1, h);
                     return (
@@ -112,7 +112,7 @@ export default function Timetable() {
                       </div>
                     );
                   })}
-                </>
+                </React.Fragment>
               ))}
             </div>
           </div>
