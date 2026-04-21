@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { toast } from "@/hooks/use-toast";
-import { parseICS } from "@/lib/ical";
 import { Trash2, Plus, BookOpen, CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
 import { courseProvider } from "@/lib/courseProvider";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
