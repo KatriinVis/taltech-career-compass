@@ -14,7 +14,192 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      career_plans: {
+        Row: {
+          created_at: string
+          id: string
+          ranked: Json | null
+          reasoning: string | null
+          selected_path: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ranked?: Json | null
+          reasoning?: string | null
+          selected_path?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ranked?: Json | null
+          reasoning?: string | null
+          selected_path?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      check_ins: {
+        Row: {
+          completed_blocks: number | null
+          created_at: string
+          difficulty: number | null
+          id: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_blocks?: number | null
+          created_at?: string
+          difficulty?: number | null
+          id?: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_blocks?: number | null
+          created_at?: string
+          difficulty?: number | null
+          id?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cv_uploads: {
+        Row: {
+          created_at: string
+          extracted: Json | null
+          id: string
+          raw_text: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          extracted?: Json | null
+          id?: string
+          raw_text?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          extracted?: Json | null
+          id?: string
+          raw_text?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string | null
+          id: string
+          interests: string[] | null
+          onboarded: boolean | null
+          program: string | null
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string | null
+          id: string
+          interests?: string[] | null
+          onboarded?: boolean | null
+          program?: string | null
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          interests?: string[] | null
+          onboarded?: boolean | null
+          program?: string | null
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
+      schedule_events: {
+        Row: {
+          course_code: string | null
+          created_at: string
+          day_of_week: number | null
+          end_time: string | null
+          ends_at: string | null
+          id: string
+          kind: string
+          source: string | null
+          start_time: string | null
+          starts_at: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          course_code?: string | null
+          created_at?: string
+          day_of_week?: number | null
+          end_time?: string | null
+          ends_at?: string | null
+          id?: string
+          kind?: string
+          source?: string | null
+          start_time?: string | null
+          starts_at?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          course_code?: string | null
+          created_at?: string
+          day_of_week?: number | null
+          end_time?: string | null
+          ends_at?: string | null
+          id?: string
+          kind?: string
+          source?: string | null
+          start_time?: string | null
+          starts_at?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      study_plans: {
+        Row: {
+          created_at: string
+          id: string
+          retention_risk: number | null
+          selected_courses: Json | null
+          updated_at: string
+          user_id: string
+          workload_target: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          retention_risk?: number | null
+          selected_courses?: Json | null
+          updated_at?: string
+          user_id: string
+          workload_target?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          retention_risk?: number | null
+          selected_courses?: Json | null
+          updated_at?: string
+          user_id?: string
+          workload_target?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
