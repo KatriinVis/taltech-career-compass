@@ -1,85 +1,66 @@
 
 
-# Voice + chat assistant for MESA.I
+# Text-only AI assistant for MESA.I (voice deferred)
 
-Add a single AI assistant the user can talk to (mic) or type to, that can read their data and take actions: check calendar, list deadlines, add CV info, search/add courses.
-
-## Decision: support BOTH, default to text
-
-- **Text** is the primary input — faster, more accurate, works in lectures/libraries, easier to edit, works for course codes ("ITI0102" is hard to dictate).
-- **Voice** is a quality-of-life add-on via a mic button on the same input. Good for quick check-ins ("what's due this week?") and CV dictation. Uses ElevenLabs Scribe (already a strong fit) for speech-to-text — voice is just transcribed into the text box, then the same agent runs.
-
-Single interface, two ways in. No separate "voice mode."
+Drop the voice path entirely for v1. Ship the same assistant as a **text-only** chat the user can open from anywhere in the app. Voice can be added later by wiring a mic button into the same input.
 
 ## What the assistant can do (tools)
 
-The agent runs server-side (edge function) with tool-calling. Tools map to existing tables:
+Server-side agent (edge function) with tool-calling. All tools are user-scoped via the caller's JWT → RLS enforces access.
 
-1. **`get_schedule`** `(from, to)` → reads `schedule_events` for the user. Powers "what's on my calendar today/this week?"
-2. **`get_deadlines`** `(from, to)` → reads `schedule_events` where `kind='deadline'` (or syllabus assignments). Powers "what homework is due this week?"
-3. **`search_courses`** `(query, faculty?, level?)` → wraps `searchCatalog`. Powers "find me a machine learning course."
-4. **`add_course_to_plan`** `(code)` → inserts into `user_courses` (with conflict check via `checkFit`). Confirms before inserting.
-5. **`append_to_cv`** `(section, text)` → updates latest `cv_uploads.raw_text` (appends a new bullet to experience/skills/etc.) and re-runs `analyze-cv` so extracted skills update. Powers "add that I did a Python internship at Bolt last summer."
-6. **`get_career_status`** → reads latest `career_plans` so the assistant can answer "what's my recommended path?"
+1. **`get_schedule(from, to)`** — reads `schedule_events`. Powers "what's on my calendar today/this week?"
+2. **`get_deadlines(from, to)`** — reads `schedule_events` filtered to deadlines/assignments. Powers "what homework is due this week?"
+3. **`search_courses(query, faculty?, level?)`** — wraps `searchCatalog`. Powers "find me a machine learning course."
+4. **`add_course_to_plan(code)`** — inserts into `user_courses`, runs `checkFit` first, surfaces conflicts. Requires user confirmation in UI before executing.
+5. **`append_to_cv(section, text)`** — appends a bullet to latest `cv_uploads.raw_text`, re-runs `analyze-cv` so extracted skills update. Powers "add that I did a Python internship at Bolt."
+6. **`get_career_status()`** — reads latest `career_plans` row. Powers "what's my recommended path and what's my biggest skill gap?"
 
-All tools are user-scoped (server uses the caller's JWT → RLS does the rest).
+Read-only tools auto-execute. Write tools (`add_course_to_plan`, `append_to_cv`) render an inline confirmation card and only run on **Confirm**.
 
 ## UI
 
-- **Floating assistant button** (bottom-right, all app pages) → opens a side drawer.
-- **Drawer contents**: message history (markdown rendered), text input with send button, mic button next to send.
-- **Mic button**: tap to start, tap to stop. Transcribed text fills the input — user can edit before sending. Visual recording indicator (pulsing red dot + waveform).
-- **Tool actions** appear inline as confirmation cards: "Add *Distributed Systems (ITC8030)* to your plan? [Confirm] [Cancel]" — destructive/data-changing tools never auto-execute.
+- **Floating assistant button** (bottom-right, all app pages) → opens a side `Sheet`.
+- **Drawer contents**:
+  - Scrolling message list (markdown rendered)
+  - Text input + Send button at the bottom
+  - Inline tool-confirmation cards: "Add *Distributed Systems (ITC8030)* to your plan? [Confirm] [Cancel]"
+  - Empty-state suggestions: "What's due this week?" · "Find a machine learning elective" · "Add Python internship to my CV"
+- No mic button yet. Layout leaves room next to Send so voice can slot in later without redesign.
 
 ## Architecture
 
 ```text
-User (text or transcribed voice)
+User types message
         │
         ▼
-  Assistant Drawer (React)
+  Assistant Drawer (React, in AppLayout)
         │  POST /assistant (SSE stream)
         ▼
   Edge function: assistant
-   ├─ Lovable AI Gateway (gemini-3-flash-preview, streaming, tools)
+   ├─ Lovable AI Gateway (google/gemini-3-flash-preview, streaming, tool-calling)
    ├─ Tool dispatch → Supabase queries (uses user JWT)
-   └─ Streams tokens + tool-call events back
+   └─ Streams text tokens + tool-call events back
         │
         ▼
-  Renders message + tool confirmation cards
+  Renders streamed message + confirmation cards for write tools
 ```
 
-Voice path:
-```text
-Mic → MediaRecorder → /transcribe edge function
-                           │
-                           ▼
-                  ElevenLabs Scribe (scribe_v2)
-                           │
-                           ▼
-                  text → fills input box
-```
+Conversation state lives in component state for v1 (no DB persistence — fresh thread per drawer open). Easy to add a `chat_messages` table later.
 
 ## New files / changes
 
-- `supabase/functions/assistant/index.ts` — streaming chat with tool-calling (Lovable AI). Tools listed above.
-- `supabase/functions/transcribe/index.ts` — accepts audio blob, calls ElevenLabs Scribe, returns `{ text }`. Requires `ELEVENLABS_API_KEY` secret.
-- `src/components/app/AssistantDrawer.tsx` — drawer UI with message list, input, mic button, tool-confirmation cards.
-- `src/components/app/AssistantButton.tsx` — floating launcher; mounted in `AppLayout`.
-- `src/lib/voiceCapture.ts` — small helper around `MediaRecorder` for capturing webm audio.
-- `src/components/app/AppLayout.tsx` — mount the floating button.
-- `supabase/config.toml` — add `[functions.assistant]` and `[functions.transcribe]` blocks.
+- `supabase/functions/assistant/index.ts` — streaming chat endpoint with the 6 tools above. Uses Lovable AI Gateway (`LOVABLE_API_KEY`, already provisioned).
+- `src/components/app/AssistantDrawer.tsx` — `Sheet`-based drawer with message list, input, confirmation cards, SSE consumer.
+- `src/components/app/AssistantButton.tsx` — floating launcher (fixed bottom-right, `MessageCircle` icon).
+- `src/components/app/AppLayout.tsx` — mount the floating button so it appears on every authenticated page.
+- `supabase/config.toml` — add `[functions.assistant]` block with `verify_jwt = true` (we want the user JWT for RLS).
 
-No DB schema changes. CV append reuses `cv_uploads`; course add reuses `user_courses`.
+No DB schema changes. No new secrets needed. No voice code.
 
-## Secret needed
+## Out of scope (deferred)
 
-`ELEVENLABS_API_KEY` for transcription. Lovable AI gateway uses the existing `LOVABLE_API_KEY` (already provisioned). I'll request the ElevenLabs key when we start building.
-
-## Out of scope
-
-- Voice **output** (TTS reading replies aloud) — not requested; can add later.
-- Background "always listening" — privacy + cost; explicit tap-to-record only.
-- Editing/deleting calendar items via voice — read-only for schedule in v1; only CV and course-plan are write-enabled.
-- Multi-turn voice ping-pong without tapping mic again.
+- Voice input (mic + transcription edge function + ElevenLabs key) — revisit after text version ships.
+- Voice output / TTS replies.
+- Persisting chat history across sessions.
+- Editing/deleting calendar items via the assistant (read-only for schedule in v1).
 
