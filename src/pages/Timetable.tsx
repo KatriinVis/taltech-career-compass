@@ -297,7 +297,7 @@ export default function Timetable() {
                               </div>
                             )}
                             {ones.map((o) => (
-                              <div key={o.id} className={`rounded-md p-1.5 text-xs leading-tight ${kindColor[o.kind] || "bg-secondary"}`}>
+                              <div key={o.id} className={`rounded-md p-1.5 text-xs leading-tight ${kindColor[o.kind] || "bg-secondary"} ${o.completed_at ? "opacity-50 line-through" : ""}`}>
                                 <div className="font-medium truncate">{o.title}</div>
                                 <div className="opacity-80 text-[10px]">{new Date(o.starts_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
                               </div>
