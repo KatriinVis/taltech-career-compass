@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { courseProvider, subscribeCourses, type Course } from "@/lib/courseProvider";
+import { courseProvider, subscribeCourses, searchCatalog, listFaculties, type Course, type CatalogCourse } from "@/lib/courseProvider";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { Sparkles, Plus, AlertTriangle, Check, Globe } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sparkles, Plus, AlertTriangle, Check, Globe, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const DAY_NAMES = ["", "Mon", "Tue", "Wed", "Thu", "Fri"];
@@ -21,10 +22,57 @@ export default function Courses() {
   const [jd, setJd] = useState("");
   const [jdSubmitted, setJdSubmitted] = useState("");
   const [, forceTick] = useState(0);
+  // Catalog browse state
+  const [catQuery, setCatQuery] = useState("");
+  const [catFaculty, setCatFaculty] = useState<string | null>(null);
+  const [catPage, setCatPage] = useState(0);
+  const [catRows, setCatRows] = useState<CatalogCourse[]>([]);
+  const [catTotal, setCatTotal] = useState(0);
+  const [catLoading, setCatLoading] = useState(false);
+  const [faculties, setFaculties] = useState<string[]>([]);
+  const PAGE_SIZE = 50;
   useEffect(() => {
     courseProvider.loadCourses().then(() => forceTick((n) => n + 1));
     return subscribeCourses(() => forceTick((n) => n + 1));
   }, []);
+
+  useEffect(() => {
+    listFaculties().then(setFaculties).catch(() => {});
+  }, []);
+
+  const loadCatalog = async () => {
+    setCatLoading(true);
+    try {
+      const r = await searchCatalog({
+        query: catQuery || undefined,
+        faculty: catFaculty,
+        source: tab === "all" ? null : tab,
+        page: catPage,
+        pageSize: PAGE_SIZE,
+      });
+      setCatRows(r.rows);
+      setCatTotal(r.count);
+    } catch { }
+    setCatLoading(false);
+  };
+
+  useEffect(() => {
+    loadCatalog();
+  }, [catQuery, catFaculty, catPage, tab]);
+
+  const addToCurriculum = async (c: CatalogCourse) => {
+    if (!user) return;
+    const { error } = await supabase.from("user_courses").insert({
+      user_id: user.id,
+      code: c.code,
+      name: c.name,
+      ects: c.ects,
+      semester: c.semester,
+      status: "planned",
+    });
+    if (error) { toast({ title: "Viga", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Lisatud õppekavasse", description: `${c.code} · ${c.name}` });
+  };
 
   const load = async () => {
     if (!user) return;
