@@ -263,6 +263,9 @@ async function upsertCourses(supabase: ReturnType<typeof createClient>, list: Co
       end: c.end ?? null, room: c.room ?? null, format: c.format ?? null,
       university: c.university ?? null, source: c.source, description: c.description ?? null,
       url: c.url ?? null, last_synced_at: new Date().toISOString(),
+      name_en: c.name_en ?? null, level: c.level ?? null, language: c.language ?? null,
+      faculty: c.faculty ?? null, assessment: c.assessment ?? null,
+      learning_outcomes: c.learning_outcomes ?? null, instructor: c.instructor ?? null,
     }, { onConflict: "code" }).select("code");
     if (error) { failed++; console.error("upsert error", c.code, error.message); continue; }
     inserted += data?.length ?? 0;
