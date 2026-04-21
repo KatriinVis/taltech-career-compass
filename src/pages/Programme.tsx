@@ -1,0 +1,232 @@
+import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "@/hooks/use-toast";
+import { Calendar as CalendarIcon, CheckCircle2, Circle, Clock, Trash2 } from "lucide-react";
+
+type UC = {
+  id: string;
+  code: string;
+  name: string;
+  ects: number | null;
+  semester: string | null;
+  status: "completed" | "in_progress" | "planned";
+  assessment: string | null;
+  learning_outcomes: string[] | null;
+  topics: string[] | null;
+  skills: string[] | null;
+  prerequisites: string[] | null;
+  kind: string | null;
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  completed: "Läbitud",
+  in_progress: "Pooleli",
+  planned: "Plaanis",
+};
+
+export default function Programme() {
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
+  const [courses, setCourses] = useState<UC[]>([]);
+  const [progCode, setProgCode] = useState("");
+  const [progName, setProgName] = useState("");
+  const [targetEcts, setTargetEcts] = useState(120);
+  const [targetGrad, setTargetGrad] = useState("");
+
+  const load = async () => {
+    if (!user) return;
+    const [p, c] = await Promise.all([
+      supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
+      supabase.from("user_courses").select("*").eq("user_id", user.id).order("code"),
+    ]);
+    setProfile(p.data);
+    setProgCode((p.data as any)?.programme_code ?? "");
+    setProgName((p.data as any)?.programme_name ?? "");
+    setTargetEcts((p.data as any)?.target_ects ?? 120);
+    setTargetGrad((p.data as any)?.target_graduation ?? "");
+    setCourses((c.data as any) ?? []);
+  };
+  useEffect(() => { load(); }, [user]);
+
+  const saveProfile = async () => {
+    if (!user) return;
+    const { error } = await supabase.from("profiles").update({
+      programme_code: progCode || null,
+      programme_name: progName || null,
+      target_ects: targetEcts,
+      target_graduation: targetGrad || null,
+    } as any).eq("id", user.id);
+    if (error) toast({ title: "Ei salvestatud", description: error.message, variant: "destructive" });
+    else toast({ title: "Salvestatud" });
+  };
+
+  const setStatus = async (id: string, status: UC["status"]) => {
+    const { error } = await supabase.from("user_courses").update({ status }).eq("id", id);
+    if (error) return toast({ title: "Viga", description: error.message, variant: "destructive" });
+    setCourses((cs) => cs.map((c) => (c.id === id ? { ...c, status } : c)));
+  };
+
+  const remove = async (id: string) => {
+    const { error } = await supabase.from("user_courses").delete().eq("id", id);
+    if (error) return toast({ title: "Viga", description: error.message, variant: "destructive" });
+    setCourses((cs) => cs.filter((c) => c.id !== id));
+  };
+
+  const addToCalendar = async (c: UC) => {
+    if (!user) return;
+    if (c.kind === "thesis" && targetGrad) {
+      // Generate thesis milestones
+      const grad = new Date(targetGrad);
+      const milestones = [
+        { title: `${c.name}: teema kinnitamine`, offset: -120 },
+        { title: `${c.name}: esimene mustand`, offset: -60 },
+        { title: `${c.name}: eelkaitsmine`, offset: -21 },
+        { title: `${c.name}: kaitsmine`, offset: 0 },
+      ];
+      const rows = milestones.map((m) => {
+        const d = new Date(grad);
+        d.setDate(d.getDate() + m.offset);
+        return {
+          user_id: user.id,
+          title: m.title,
+          kind: "thesis",
+          starts_at: d.toISOString(),
+          ends_at: new Date(d.getTime() + 60 * 60 * 1000).toISOString(),
+          course_code: c.code,
+          source: "programme",
+        };
+      });
+      const { error } = await supabase.from("schedule_events").insert(rows);
+      if (error) return toast({ title: "Viga", description: error.message, variant: "destructive" });
+      toast({ title: "Lõputöö verstapostid lisatud", description: `${rows.length} kirjet kalendrisse` });
+    } else {
+      const { error } = await supabase.from("schedule_events").insert({
+        user_id: user.id,
+        title: `${c.code} ${c.name}`,
+        kind: "class",
+        course_code: c.code,
+        source: "programme",
+      });
+      if (error) return toast({ title: "Viga", description: error.message, variant: "destructive" });
+      toast({ title: "Lisatud kalendrisse" });
+    }
+  };
+
+  const totals = useMemo(() => {
+    const sum = (s: UC["status"]) =>
+      courses.filter((c) => c.status === s).reduce((a, c) => a + (Number(c.ects) || 0), 0);
+    return {
+      completed: sum("completed"),
+      in_progress: sum("in_progress"),
+      planned: sum("planned"),
+    };
+  }, [courses]);
+
+  const earned = totals.completed;
+  const remaining = Math.max(0, targetEcts - earned);
+  const pct = Math.min(100, Math.round((earned / Math.max(1, targetEcts)) * 100));
+
+  const groups: { key: UC["status"]; title: string; tone: string }[] = [
+    { key: "completed", title: "Läbitud", tone: "bg-primary/10 border-primary/30" },
+    { key: "in_progress", title: "Pooleli", tone: "bg-secondary border-border" },
+    { key: "planned", title: "Plaanis", tone: "bg-muted border-border" },
+  ];
+
+  return (
+    <div className="space-y-6 max-w-4xl">
+      <div>
+        <h1 className="font-display text-3xl">Minu õppekava</h1>
+        <p className="text-muted-foreground">Sinu isiklikud ained, mille oled MESA.I-sse üles laadinud.</p>
+      </div>
+
+      <Card>
+        <CardHeader><CardTitle>Õppekava sihtmärk</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid md:grid-cols-2 gap-4">
+            <div><Label>Programmi kood</Label><Input value={progCode} onChange={(e) => setProgCode(e.target.value)} placeholder="TATM" /></div>
+            <div><Label>Programmi nimi</Label><Input value={progName} onChange={(e) => setProgName(e.target.value)} placeholder="Tehnoloogia ja juhtimine, MA" /></div>
+            <div><Label>Sihtmärk EAP</Label><Input type="number" value={targetEcts} onChange={(e) => setTargetEcts(Number(e.target.value))} /></div>
+            <div><Label>Planeeritud lõpetamine</Label><Input type="date" value={targetGrad ?? ""} onChange={(e) => setTargetGrad(e.target.value)} /></div>
+          </div>
+          <Button onClick={saveProfile}>Salvesta</Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>Edenemine</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-baseline justify-between">
+            <div className="text-3xl font-display">{earned} / {targetEcts} EAP</div>
+            <div className="text-sm text-muted-foreground">{remaining} EAP puudu</div>
+          </div>
+          <div className="h-2 bg-secondary rounded-full overflow-hidden">
+            <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+          </div>
+          <div className="flex gap-4 text-xs text-muted-foreground pt-1">
+            <span><CheckCircle2 className="inline size-3 text-primary" /> Läbitud {totals.completed} EAP</span>
+            <span><Clock className="inline size-3" /> Pooleli {totals.in_progress} EAP</span>
+            <span><Circle className="inline size-3" /> Plaanis {totals.planned} EAP</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {courses.length === 0 ? (
+        <Card>
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            Veel ühtegi ainet pole üles laetud. Mine <a className="text-primary underline" href="/settings">Settings</a> lehele ja lae oma ainekavad (RTF/PDF/DOCX).
+          </CardContent>
+        </Card>
+      ) : (
+        groups.map((g) => {
+          const list = courses.filter((c) => c.status === g.key);
+          if (list.length === 0) return null;
+          return (
+            <div key={g.key} className="space-y-2">
+              <h2 className="font-display text-xl">{g.title} <span className="text-sm text-muted-foreground font-sans">· {list.length} ainet</span></h2>
+              <div className="grid gap-2">
+                {list.map((c) => (
+                  <Card key={c.id} className={g.tone}>
+                    <CardContent className="py-3 flex items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">{c.code} · {c.name}</div>
+                        <div className="text-xs text-muted-foreground flex flex-wrap gap-2 mt-0.5">
+                          {c.ects != null && <span>{c.ects} EAP</span>}
+                          {c.semester && <span>{c.semester}</span>}
+                          {c.assessment && <span>{c.assessment}</span>}
+                          {(c.skills ?? []).slice(0, 4).map((s) => (
+                            <Badge key={s} variant="outline" className="text-[10px]">{s}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                      <Select value={c.status} onValueChange={(v) => setStatus(c.id, v as UC["status"])}>
+                        <SelectTrigger className="w-32 h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(STATUS_LABEL).map(([k, v]) => (
+                            <SelectItem key={k} value={k}>{v}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button size="sm" variant="outline" onClick={() => addToCalendar(c)} title="Lisa kalendrisse">
+                        <CalendarIcon className="size-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost" onClick={() => remove(c.id)} title="Kustuta">
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+}
