@@ -1,75 +1,60 @@
 
 
-# Iga kasutaja oma õppekava — RTF/PDF üleslaadija
+# Täis-sünk ainult magistri-tasemel TalTech ained
 
-Igal kasutajal on erinev õppekava (TATM, IVCM, IAIB, bakalaureus jne), seega ei saa staatilist faili kasutada. Selle asemel laeb iga kasutaja **oma ainekavad ükshaaval** üles (RTF, PDF, DOCX) — nagu sa just praegu tegid TMJ0140-ga — ja MESA.I parsib need automaatselt sinu isiklikku õppekavasse.
+Sünk piiratakse magistriõppe (MSc) ainetega — see annab ~800–1200 ainet (mitte 3000+) ja maksab **~500–800 Firecrawl krediiti** ühekordseks täis-sünkimiseks.
 
 ## Mida ehitame
 
-### 1. Ainekava üleslaadija (Settings → "Minu õppekava")
+### 1. Andmeallikas — TalTech ÕIS, magistri-filter
 
-Uus kaart `/settings` lehel:
-- **Drag-and-drop ala**: lohista 1+ ainekava faili korraga (`.rtf`, `.pdf`, `.docx`, `.txt`)
-- Iga fail → parsitakse → näidatakse eelvaade (kood, nimi, EAP, semester, eeldusained, õpiväljundid)
-- Sina märgid: **Läbitud** ✓ / **Pooleli** / **Plaanis**
-- "Salvesta" → kõik aineid salvestakse `user_courses` tabelisse
+`sync-courses` edge function uuendatakse:
+- Crawlib `https://ois2.taltech.ee/uusois/aine/otsi` magistri-koodide prefiksitega
+- TalTechi konventsioon: magistri-ained on tihti **5-kohalise koodiga** (nt `ITC8101`, `MEC9020`) kus 4. number on **8 või 9** (8xxx = MSc, 9xxx = PhD-tase aga MSc-le avatud). Bakalaureuse ained on 0xxx–7xxx.
+- Filtreerime parsimisel: ainult need, mille koodimuster vastab `^[A-Z]{3}[89]\d{3}$` või kus aine-leht ütleb sõnaselgelt "magistriõpe" / "Master"
+- Prefiksid katame teaduskondade kaupa: ITI, ITA, ITC, ITV, ITP, MAT, TMJ, EER, MEC, YFR, EMR, EAA, EJR (~13 prefiksit × ~80 MSc ainet = ~1000 ainet)
 
-### 2. RTF parsimine (uus, kuna `cvExtract.ts` seda ei toeta)
+### 2. Crawli batching
 
-Lisame `extractTextFromFile()` funktsioonile RTF-toe — lihtne regex tõmbab `\'XX` hex-escape'd ja `{...}` kontrollpäised välja, jättes alles puhta teksti. Töötab ka eesti-tähtedega (`\'F5` = õ, `\'E4` = ä jne).
+- Iga prefiks → eraldi Firecrawl `crawl` (limit 100 lehte, ainult MSc-mustriga URL-id)
+- Edge function timeout (~150s) kõigi 13 prefiksi jaoks korraga ei jõua → jagame **3 batchi**:
+  - Batch A: IT-teaduskond (ITI, ITA, ITC, ITV, ITP)
+  - Batch B: Reaal- ja inseneriteadused (MAT, MEC, EER, EMR, EAA)
+  - Batch C: Majandus ja muu (TMJ, YFR, EJR)
+- UI-s 3 nuppu + "Sünki kõik MSc" mis kutsub kõik 3 järjest taustal
 
-### 3. Ainekava-spetsiifiline parser (uus edge function `parse-syllabus`)
+### 3. Andmebaasi täiendused
 
-Sarnaselt `analyze-cv`-le, aga TalTech ainekava jaoks. Azure OpenAI tool-call tagastab struktureeritult:
+`courses` tabelisse uued väljad (migratsioon):
+- `name_en text`, `level text` (siia kirjutame `'msc'`), `language text[]`, `faculty text` (prefiksist), `assessment text`, `learning_outcomes text[]`, `instructor text`
 
-```json
-{
-  "code": "TMJ0140",
-  "name_et": "Ettevõtluse alused",
-  "name_en": "Introduction to Entrepreneurship",
-  "ects": 6.0,
-  "semester": "sügis-kevad",
-  "assessment": "eksam",
-  "language": ["eesti", "inglise"],
-  "prerequisites": [],
-  "learning_outcomes": ["kirjeldab ettevõtluse põhimõisteid...", ...],
-  "topics": ["ettevõtluskultuur", "ärimudel", ...],
-  "workload": { "lectures": 1.0, "practicals": 0.0, "seminars": 3.0 },
-  "skills": ["entrepreneurship", "business-modeling", "team-work"]
-}
-```
+`sync_runs`-isse: `prefix text`, et näha milline batch jooksis ja mis seis on.
 
-Skills tuletatakse õpiväljunditest sama kontrollvoarakuga, mida `sync-courses` juba kasutab — nii et parsitud aine sobitub sinu karjääriraja soovituste / pudeli-diagrammiga ühtmoodi.
+### 4. UI ümberkorraldus
 
-### 4. Sinu isiklik õppekava-vaade (`/programme`)
+- **Settings**: eemaldame "Course catalog" kaardi (ei kuulu sinna, see on globaalne süsteem)
+- **Õppekava leht** (`/programme`): uus kaart "TalTech magistri-kataloog" — näitab kogu ainete arvu, viimati sünnitud, 3 batch-nuppu + üks "Sünki kõik" nupp, viimase sünk-jooksu seis prefiksite kaupa
+- **Courses leht** (`/courses`): lisame otsingu (kood/nimi), filtri teaduskonna järgi, paginatsiooni (50 kaupa), ja iga aine kõrval nupp **"Lisa minu õppekavasse"** → kirjutab `user_courses`-isse staatusega `planned`. Nüüd ei pea iga aine jaoks RTF-i üles laadima.
 
-Uus leht, mis näitab sinu üles laetud aineid:
-- **Läbitud** (rohelised märkega) — kogu EAP summa
-- **Pooleli** (kollased) — selle semestri aktiivsed
-- **Plaanis** (hallid) — tulevased
+## Failid
 
-EAP edenemisriba ja "X EAP puudu lõpetamiseni" arvutus (sa sisestad sihtmärgi: nt 120 EAP magistri jaoks).
+- **Muudame**: `supabase/functions/sync-courses/index.ts` (ÕIS-parser + MSc-filter + batch-režiim), `src/pages/Settings.tsx` (eemaldame kataloogi-kaardi), `src/pages/Programme.tsx` (lisame kataloogi-kaardi 3 batch-nupuga), `src/pages/Courses.tsx` (otsing + filtrid + paginatsioon + "Lisa õppekavasse"), `src/lib/courseProvider.ts` (Supabase-päring `searchCourses({query, faculty, page})`)
+- **Migratsioon**: `courses` uued väljad, `sync_runs.prefix`
 
-### 5. Kalendrisse lisamine
+## Kulud
 
-Iga aine kõrval nupp **"Lisa kalendrisse"** → see loob `schedule_events` kirje (kasutab juba olemasolevat süllabuse-→-kalendri loogikat, mis on `Timetable.tsx`-s). Lõputöö verstapostid (kui sa märgid aine `kind: "thesis"`) genereeritakse automaatselt sinu sisestatud kaitsmiskuupäeva järgi — teema, mustand, eelkaitsmine, esitamine.
+- **Firecrawl**: ~500–800 krediiti täis-MSc-sünkimiseks (ühekordne); üksiku batchi kordussünk ~200 krediiti
+- **Lovable krediidid**: keskmine build-task (1 edge function muudatus, 1 migratsioon, 4 UI-faili)
+- **Aeg**: täis-sünk taustal ~10–15 min (3 batchi järjest)
 
-## Andmebaas
+## Skoobist välja
 
-Üks uus tabel (RLS: ainult kasutaja ise):
+- Bakalaureuse ained (saab hiljem lisada teise nupuga)
+- Tunniplaani aja-info (`day`, `start`, `room`) magistri-ainete jaoks — see vajab eraldi tunniplaani-sünki
+- EuroTeQ — töötab juba, ei muuda
+- Estikeelne UI tõlge
 
-- **`user_courses`** — `id`, `user_id`, `code`, `name`, `ects`, `semester`, `status` (`completed` | `in_progress` | `planned`), `assessment`, `learning_outcomes` (text[]), `topics` (text[]), `skills` (text[]), `prerequisites` (text[]), `workload` (jsonb), `raw_text`, `source_filename`, `created_at`
+## Hoiatus
 
-Pluss `profiles`-le lisame: `programme_code` (nt "TATM"), `programme_name`, `target_ects` (nt 120), `target_graduation` (date).
-
-## Failid mida muudame
-
-- **Uus**: `src/pages/Programme.tsx` (sinu õppekava-vaade), `supabase/functions/parse-syllabus/index.ts`, migratsioon `user_courses` tabeli + `profiles` lisaväljade jaoks
-- **Muudame**: `src/lib/cvExtract.ts` (lisame RTF-toe), `src/pages/Settings.tsx` (lisame ainekava-üleslaadija kaardi), `src/components/app/AppLayout.tsx` (lisame "Õppekava" nav-lingi), `src/pages/Dashboard.tsx` (asendame "Program progress" reaalsete andmetega `user_courses`-st)
-
-## Mis ei ole skoobis
-
-- ÕISist automaatne tõmbamine (vajab VPN-i ja kasutaja-autentimist)
-- Hinnete sünk
-- Mitme kasutaja õppekavade jagamine
+Kui ÕIS-i koodimuster (4. number 8/9 = MSc) ei ole 100% täpne kõikides teaduskondades, kasutame fallback'ina ainekava-lehel olevat sõnaselget "õppetase: magistriõpe" välja. Esimese batchi järel kontrollin, kas filter töötab ootuspäraselt — kui ei, kohandame regexi enne ülejäänud batche.
 
