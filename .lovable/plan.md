@@ -1,67 +1,59 @@
 
 
-# AI Mobility Agent — TalTech Career Driver
+# Switch AI backend to Azure OpenAI (hackathon credentials)
 
-A pilot-ready web app that helps 2nd-year TalTech students align their courses, schedule, and career path using an AI agent.
+Replace the Lovable AI Gateway calls in our three edge functions with Azure OpenAI calls using the hackathon-provided endpoint, key, and `gpt-5.4-nano` deployment.
 
-## Stack
-- React + Tailwind (existing Lovable starter)
-- Lovable Cloud (Postgres + Auth + Edge Functions)
-- Lovable AI Gateway (Gemini 2.5 Flash default, Pro for CV/career reasoning)
+## What changes
 
-## Core data (mock, v1)
-- `taltech_courses.json` — ~40 realistic 2nd-year IT/Engineering courses (code, name, ECTS, semester, schedule slot, prerequisites, required/elective, skills tags)
-- `euroteq_courses.json` — ~20 EuroTeQ cross-university electives
-- `career_paths.json` — ~15 paths (Software Eng, Data Sci, Robotics, Product, Cybersec, etc.) with required skills + linked courses
-- All loaded via a `courseProvider` interface so real APIs can plug in later
+**1. Store the credentials as backend secrets** (never in frontend code)
+Add two secrets to Lovable Cloud:
+- `AZURE_OPENAI_API_KEY` = the provided key
+- `AZURE_OPENAI_ENDPOINT` = `https://taltech-agent-hackathon-2026-20.openai.azure.com`
 
-## Auth & onboarding
-- Email + password (Lovable Cloud)
-- `profiles` table: name, program, year, interests
-- `cv_uploads`, `study_plans`, `career_plans`, `schedule_events` tables (RLS: user owns their rows)
-- 3-step onboarding: account → program/year/interests → upload CV (PDF/text)
+(Deployment name `gpt-5.4-nano` and API version `2025-01-01-preview` will be hardcoded constants in the functions — they're not secret.)
 
-## Features
+## How
 
-**1. Smart Timetable**
-- Visual weekly grid (Mon–Fri, time slots)
-- Auto-generates schedule from selected required + suggested elective courses, resolving conflicts
-- Add assignments + study blocks; drag to reschedule
-- **Moodle iCal import**: paste `.ics` URL or upload file → parses deadlines into the schedule
-- Adaptive workload: agent reduces suggested study hours when too many deadlines cluster, flags retention risk (low logged activity, missed self-check-ins)
+**2. Update the three edge functions** — `supabase/functions/analyze-cv/index.ts`, `match-career/index.ts`, `coach/index.ts`.
 
-**2. Career Alignment Engine**
-- Edge function `analyze-cv`: parses uploaded CV via Lovable AI → extracts skills, experience, interests
-- Edge function `match-career`: maps profile → ranked career paths with explainable reasoning ("You have Python + stats → Data Science: 87% match because…")
-- Suggests specific TalTech + EuroTeQ courses and skills to close gaps
-- Recommends events (mock seeded list, extensible)
+Replace this Lovable Gateway pattern:
+```
+POST https://ai.gateway.lovable.dev/v1/chat/completions
+Authorization: Bearer ${LOVABLE_API_KEY}
+body: { model: "google/gemini-2.5-flash", messages, tools? }
+```
 
-**3. Bottle Diagram Visualization**
-- SVG funnel: CV skills (wide top) → interests filter → candidate paths (narrowing) → chosen goal (bottle neck)
-- Interactive: click a layer to see what was filtered and why
+With Azure OpenAI's chat completions pattern:
+```
+POST {AZURE_OPENAI_ENDPOINT}/openai/deployments/gpt-5.4-nano/chat/completions?api-version=2025-01-01-preview
+api-key: ${AZURE_OPENAI_API_KEY}
+body: { messages, tools?, tool_choice? }   // no `model` field — deployment is in the URL
+```
 
-**4. Adaptive Agent Loop**
-- Daily check-in widget: "How did this week go?" → adjusts plan
-- Performance signals (self-rated course difficulty, completion of study blocks) feed back into workload + course suggestions
-- Rule-based retention risk score + AI-generated coaching message
+Notes:
+- The Azure REST API is OpenAI-compatible, so the existing `tools` / `tool_choice` blocks in `analyze-cv` and `match-career` keep working unchanged.
+- Drop the `model` field from the request body (Azure ignores it; deployment is in the path).
+- Auth header changes from `Authorization: Bearer …` to `api-key: …`.
+- Keep all existing CORS headers, input validation, and error handling. Surface 429 (rate limit) and 402-equivalent errors as toasts (already done in `Career.tsx` / `Dashboard.tsx`).
+- Keep `verify_jwt = false` in `supabase/config.toml` (already set).
 
-## Demo flow (judge-ready)
-Sign up → onboarding → upload CV → see extracted skills → view 3 ranked career paths with reasoning → accept one → auto-generated timetable + study plan appears → import Moodle iCal → adaptive recommendations update
+## Budget safety
 
-## Pages
-- `/` — Landing + sign in/up
-- `/onboarding`
-- `/dashboard` — overview, retention risk, next actions
-- `/timetable`
-- `/career` — Bottle Diagram + path details
-- `/courses` — browse TalTech + EuroTeQ catalog with AI recommendations
-- `/settings`
+To stretch the $5 cap:
+- `gpt-5.4-nano` is already the cheapest tier — keep it for all three functions (no Pro upgrade needed).
+- Cap CV input at the existing 20,000 chars (already enforced in `analyze-cv`).
+- No retry loops on failures — surface errors to user instead.
 
-## Design
-- Clean academic feel: TalTech-inspired navy + cyan accent, light background, Inter font, generous spacing, card-based layout, subtle motion on agent updates
+## Files touched
 
-## Out of scope (v1, deferred)
-- Real TalTech/EuroTeQ live API scraping
-- Native Moodle plugin (using iCal import instead)
-- Mobile native app
+- `supabase/functions/analyze-cv/index.ts` — swap gateway → Azure
+- `supabase/functions/match-career/index.ts` — swap gateway → Azure
+- `supabase/functions/coach/index.ts` — swap gateway → Azure
+
+No frontend, schema, or config.toml changes. The existing `Career.tsx`, `Onboarding.tsx`, and `Dashboard.tsx` continue calling the same edge functions with the same payloads.
+
+## Approval needed before implementing
+
+After you approve this plan I'll prompt you to add the two secrets (`AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT`) via Lovable Cloud's secret tool, then update the three edge functions.
 
