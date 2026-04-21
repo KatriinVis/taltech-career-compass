@@ -1,0 +1,17 @@
+[
+  {"id": "ev-ai-meetup", "title": "TalTech AI Meetup: LLMs in Production", "tags": ["ai", "ml", "machine-learning", "nlp", "python"], "starts_at": "+5", "location": "TalTech ICT-A1", "kind": "seminar"},
+  {"id": "ev-garage48", "title": "Garage48 Tallinn Hackathon", "tags": ["entrepreneurship", "product", "software-engineering", "design"], "starts_at": "+12", "location": "Lift99 Tallinn", "kind": "hackathon"},
+  {"id": "ev-cyber-ctf", "title": "CR14 Cybersecurity CTF", "tags": ["cybersecurity", "security", "cryptography", "networking"], "starts_at": "+9", "location": "TalTech CYBER lab", "kind": "competition"},
+  {"id": "ev-robotex", "title": "Robotex International Robotics Festival", "tags": ["robotics", "embedded", "ros", "control"], "starts_at": "+25", "location": "Tallinn Saku Suurhall", "kind": "festival"},
+  {"id": "ev-data-summit", "title": "Nordic Data Engineering Summit", "tags": ["data-engineering", "big-data", "sql", "python", "cloud"], "starts_at": "+18", "location": "Online", "kind": "conference"},
+  {"id": "ev-ux-night", "title": "UX Tallinn: Designing for Accessibility", "tags": ["ux", "ui", "design", "research", "accessibility"], "starts_at": "+7", "location": "Mektory Innovation Hub", "kind": "seminar"},
+  {"id": "ev-cloud-day", "title": "AWS Community Day Estonia", "tags": ["cloud", "devops", "kubernetes", "docker", "aws"], "starts_at": "+21", "location": "Kultuurikatel", "kind": "conference"},
+  {"id": "ev-quantum-talk", "title": "Quantum Computing Open Lecture", "tags": ["quantum", "physics", "math", "algorithms"], "starts_at": "+14", "location": "TalTech U02-208", "kind": "lecture"},
+  {"id": "ev-startup-day", "title": "Startup Day Tartu", "tags": ["entrepreneurship", "business", "product", "leadership"], "starts_at": "+30", "location": "Tartu", "kind": "conference"},
+  {"id": "ev-mobile-jam", "title": "Mobile Dev Jam: Flutter & SwiftUI", "tags": ["mobile", "android", "swift", "kotlin", "ux"], "starts_at": "+11", "location": "TalTech ICT-122", "kind": "workshop"},
+  {"id": "ev-green-tech", "title": "Green Tech Forum: Sustainable Engineering", "tags": ["sustainability", "energy", "engineering", "systems"], "starts_at": "+19", "location": "Tallinn Creative Hub", "kind": "forum"},
+  {"id": "ev-career-fair", "title": "TalTech Career Fair 2026", "tags": ["product", "software-engineering", "data-science", "ux", "leadership", "communication"], "starts_at": "+15", "location": "TalTech Main Hall", "kind": "career-fair"},
+  {"id": "ev-research-talk", "title": "Research Open House: Algorithms Lab", "tags": ["algorithms", "math", "research", "ai"], "starts_at": "+8", "location": "TalTech ICT-411", "kind": "open-house"},
+  {"id": "ev-iot-workshop", "title": "Industrial IoT Hands-on Workshop", "tags": ["iot", "embedded", "networking", "hardware"], "starts_at": "+16", "location": "Mektory Lab 3", "kind": "workshop"},
+  {"id": "ev-women-in-tech", "title": "Women in Tech Tallinn Mixer", "tags": ["leadership", "communication", "product", "software-engineering"], "starts_at": "+6", "location": "Lift99", "kind": "networking"}
+]

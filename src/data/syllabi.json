@@ -1,0 +1,185 @@
+{
+  "ITI0102": {
+    "topics": ["variables", "control flow", "functions", "OOP basics", "file I/O"],
+    "assignments": [
+      {"title": "PS1: Python basics", "due": "+7", "weight": 5},
+      {"title": "PS2: Functions & recursion", "due": "+14", "weight": 10},
+      {"title": "Midterm project: CLI tool", "due": "+28", "weight": 25},
+      {"title": "Final exam", "due": "+56", "weight": 40}
+    ]
+  },
+  "ITI0202": {
+    "topics": ["classes", "inheritance", "polymorphism", "design patterns", "Java"],
+    "assignments": [
+      {"title": "HW1: Class hierarchy", "due": "+10", "weight": 10},
+      {"title": "HW2: Design patterns essay", "due": "+24", "weight": 15},
+      {"title": "Group project: Java app", "due": "+45", "weight": 35}
+    ]
+  },
+  "ITI0204": {
+    "topics": ["arrays", "trees", "graphs", "sorting", "complexity"],
+    "assignments": [
+      {"title": "Lab 1: Sorting benchmarks", "due": "+8", "weight": 10},
+      {"title": "Lab 2: Graph algorithms", "due": "+22", "weight": 15},
+      {"title": "Final exam", "due": "+50", "weight": 40}
+    ]
+  },
+  "ITI0210": {
+    "topics": ["search", "logic", "knowledge representation", "planning"],
+    "assignments": [
+      {"title": "PA1: Search agent", "due": "+12", "weight": 15},
+      {"title": "PA2: Logic solver", "due": "+30", "weight": 20},
+      {"title": "Final project", "due": "+55", "weight": 35}
+    ]
+  },
+  "ITB1702": {
+    "topics": ["ER modeling", "SQL", "normalization", "transactions"],
+    "assignments": [
+      {"title": "ER diagram exercise", "due": "+9", "weight": 10},
+      {"title": "SQL queries assignment", "due": "+20", "weight": 15},
+      {"title": "DB design project", "due": "+42", "weight": 30}
+    ]
+  },
+  "ITC8240": {
+    "topics": ["regression", "classification", "neural nets", "evaluation"],
+    "assignments": [
+      {"title": "Kaggle-style competition", "due": "+18", "weight": 25},
+      {"title": "Paper review", "due": "+32", "weight": 15},
+      {"title": "Final ML project", "due": "+58", "weight": 40}
+    ]
+  },
+  "ITC8101": {
+    "topics": ["SIEM", "IDS/IPS", "log analysis", "incident response"],
+    "assignments": [
+      {"title": "Lab: log triage", "due": "+11", "weight": 15},
+      {"title": "Threat hunt report", "due": "+33", "weight": 25}
+    ]
+  },
+  "IAS0240": {
+    "topics": ["microcontrollers", "C", "interrupts", "peripherals"],
+    "assignments": [
+      {"title": "Embedded lab 1", "due": "+10", "weight": 15},
+      {"title": "Final hardware project", "due": "+48", "weight": 40}
+    ]
+  },
+  "IAS0420": {
+    "topics": ["ROS", "kinematics", "SLAM", "control"],
+    "assignments": [
+      {"title": "ROS turtle simulation", "due": "+14", "weight": 15},
+      {"title": "Final robot demo", "due": "+52", "weight": 40}
+    ]
+  },
+  "YFX1520": {
+    "topics": ["integration", "series", "multivariable basics"],
+    "assignments": [
+      {"title": "Problem set 1", "due": "+7", "weight": 10},
+      {"title": "Midterm", "due": "+28", "weight": 30},
+      {"title": "Final exam", "due": "+56", "weight": 40}
+    ]
+  },
+  "YFX1530": {
+    "topics": ["vectors", "matrices", "eigenvalues", "linear maps"],
+    "assignments": [
+      {"title": "Problem set 1", "due": "+7", "weight": 10},
+      {"title": "Midterm", "due": "+28", "weight": 30}
+    ]
+  },
+  "YFX1540": {
+    "topics": ["distributions", "estimation", "hypothesis testing"],
+    "assignments": [
+      {"title": "Stats lab 1", "due": "+9", "weight": 15},
+      {"title": "Final exam", "due": "+54", "weight": 40}
+    ]
+  },
+  "ITI0207": {
+    "topics": ["HTML/CSS", "JavaScript", "React", "REST APIs"],
+    "assignments": [
+      {"title": "Static site build", "due": "+10", "weight": 15},
+      {"title": "React SPA project", "due": "+38", "weight": 35}
+    ]
+  },
+  "ITI0301": {
+    "topics": ["processes", "memory", "filesystems", "concurrency"],
+    "assignments": [
+      {"title": "Shell scripting lab", "due": "+10", "weight": 10},
+      {"title": "Kernel module assignment", "due": "+35", "weight": 25}
+    ]
+  },
+  "ITI0303": {
+    "topics": ["OSI", "TCP/IP", "routing", "DNS"],
+    "assignments": [
+      {"title": "Wireshark lab", "due": "+12", "weight": 15},
+      {"title": "Network design project", "due": "+40", "weight": 30}
+    ]
+  },
+  "ITX8071": {
+    "topics": ["IaaS/PaaS", "containers", "Kubernetes", "CI/CD"],
+    "assignments": [
+      {"title": "Docker lab", "due": "+10", "weight": 15},
+      {"title": "K8s deployment project", "due": "+36", "weight": 30}
+    ]
+  },
+  "ITC8060": {
+    "topics": ["symmetric crypto", "asymmetric crypto", "hashing", "protocols"],
+    "assignments": [
+      {"title": "Cipher implementation", "due": "+14", "weight": 20},
+      {"title": "Final exam", "due": "+55", "weight": 40}
+    ]
+  },
+  "TMK0030": {
+    "topics": ["discovery", "roadmaps", "metrics", "stakeholders"],
+    "assignments": [
+      {"title": "Product teardown", "due": "+11", "weight": 15},
+      {"title": "Roadmap presentation", "due": "+36", "weight": 30}
+    ]
+  },
+  "HHE3370": {
+    "topics": ["lean canvas", "validation", "fundraising"],
+    "assignments": [
+      {"title": "Pitch deck draft", "due": "+18", "weight": 20},
+      {"title": "Final pitch", "due": "+50", "weight": 40}
+    ]
+  },
+  "ITI0211": {
+    "topics": ["agile", "TDD", "code review", "CI"],
+    "assignments": [
+      {"title": "Sprint 1 deliverable", "due": "+14", "weight": 20},
+      {"title": "Team capstone", "due": "+48", "weight": 40}
+    ]
+  },
+  "ITI0220": {
+    "topics": ["Android", "iOS", "cross-platform", "publishing"],
+    "assignments": [
+      {"title": "Hello-mobile app", "due": "+10", "weight": 10},
+      {"title": "Final mobile app", "due": "+45", "weight": 40}
+    ]
+  },
+  "ITI0260": {
+    "topics": ["heuristics", "user research", "prototyping"],
+    "assignments": [
+      {"title": "Heuristic evaluation", "due": "+12", "weight": 15},
+      {"title": "Usability study report", "due": "+38", "weight": 35}
+    ]
+  },
+  "ITI0250": {
+    "topics": ["Spark", "data lakes", "stream processing"],
+    "assignments": [
+      {"title": "Spark lab", "due": "+13", "weight": 15},
+      {"title": "Pipeline project", "due": "+44", "weight": 35}
+    ]
+  },
+  "ITI0270": {
+    "topics": ["rasterization", "shaders", "ray tracing"],
+    "assignments": [
+      {"title": "Shader exercise", "due": "+15", "weight": 15},
+      {"title": "Final scene render", "due": "+50", "weight": 40}
+    ]
+  },
+  "IAY0340": {
+    "topics": ["transfer functions", "PID", "state-space"],
+    "assignments": [
+      {"title": "Simulation lab", "due": "+12", "weight": 15},
+      {"title": "Controller project", "due": "+42", "weight": 35}
+    ]
+  }
+}
