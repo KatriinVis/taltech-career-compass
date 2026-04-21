@@ -383,6 +383,26 @@ export default function Courses() {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!pendingConflict} onOpenChange={(o) => { if (!o) setPendingConflict(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Schedule conflict</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingConflict && (
+                <>This course overlaps with: {pendingConflict.titles.slice(0, 3).join(", ")}{pendingConflict.titles.length > 3 ? "…" : ""}. Add it anyway?</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (pendingConflict) addToCurriculum(pendingConflict.course);
+              setPendingConflict(null);
+            }}>Add anyway</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
