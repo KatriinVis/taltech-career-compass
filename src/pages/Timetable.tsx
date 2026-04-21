@@ -550,20 +550,28 @@ export default function Timetable() {
         <Card>
           <CardHeader><CardTitle>All upcoming items</CardTitle></CardHeader>
           <CardContent className="space-y-2">
-            {oneoffs.map((e) => (
+            {oneoffs.map((e) => {
+              const done = !!e.completed_at;
+              return (
               <div key={e.id} className="flex items-center justify-between rounded-md border p-2 text-sm">
                 <div className="flex items-center gap-2 min-w-0">
+                  <Checkbox
+                    checked={done}
+                    onCheckedChange={(v) => toggleDone(e.id, !!v)}
+                    aria-label="Mark done"
+                  />
                   <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${kindColor[e.kind] || "bg-secondary"}`}>{e.kind}</span>
                   <div className="min-w-0">
-                    <div className="font-medium truncate">{e.title}</div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className={`font-medium truncate ${done ? "line-through text-muted-foreground" : ""}`}>{e.title}</div>
+                    <div className={`text-xs text-muted-foreground ${done ? "line-through" : ""}`}>
                       {new Date(e.starts_at).toLocaleString()} · {sourceLabel[e.source] ?? e.source ?? "Manual"}
                     </div>
                   </div>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => remove(e.id)}><Trash2 className="size-4" /></Button>
               </div>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
       )}
