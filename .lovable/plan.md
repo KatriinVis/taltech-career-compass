@@ -1,27 +1,34 @@
 
 
-# Switch career page copy to second-person English ("you" form)
+# Translate gap/skill labels to English, second-person
 
-Update user-facing strings on the Career page to address the user directly in English, using "you/your" phrasing.
+The "Gaps you should close" pills and other dynamic skill/interest text on the Career page currently show raw values from the AI/data that may be in Estonian or impersonal. Convert all user-facing labels in this section to English, "you" form.
 
-## Changes in `src/pages/Career.tsx`
+## Changes
 
-- Page subtitle:
-  - From: "Map your CV and interests to ranked career paths — with explainable reasoning."
-  - To: "You can map your CV and interests to ranked career paths — with clear reasoning you can follow."
-- Card title "Your CV" → keep (already second-person).
-- Upload helper text "or paste below" → "or paste yours below".
-- Textarea placeholder "Paste your CV text here…" → "Paste your CV text here so we can analyze it…".
-- Toasts:
-  - "We ranked the best career paths for you." → "Here are the best career paths for you, ranked."
-  - "Timetable updated with recommended courses." → "Your timetable is updated with the recommended courses."
-  - "CV loaded" description → "We extracted {n} characters from {file}. Click 'Run AI analysis' when you're ready."
-- Section heading "Closing your career gap" → "Closing your career gap" (already fine; add second-person sub-line in `CardContent` above the existing "Choose your goal" h2 area — actually keep card title, no change).
-- Section heading "Choose your goal" → "Choose your goal" (imperative second-person, already fine).
-- Small labels:
-  - "Gaps to close" → "Gaps you should close"
-  - "Recommended courses" → "Courses we recommend for you"
-- Selected toast: `Selected ${r.name}` → `You picked ${r.name}`.
+### `src/pages/Career.tsx`
+- Section sub-labels under each ranked path:
+  - "Gaps you should close" → **"What you still need"**
+  - "Courses we recommend for you" → keep (already good).
+- Add a short lead line above the gap pills, e.g. *"You're missing:"* so each pill reads naturally as something *you* lack.
 
-No logic, layout, or component changes — text only. No other files touched.
+### `src/components/app/BottleDiagram.tsx`
+- Right-side panel headings (currently layer labels like "skills", "interests", "paths", "goal") → second-person English:
+  - skills → **"What you have"**
+  - interests → **"What you're into"**
+  - paths → **"Paths that fit you"**
+  - goal → **"Your goal"**
+- "Other skills (not in current goal)" → **"Other skills you have (not needed for this goal)"**
+- Matched/total counter label stays numeric.
+
+### `supabase/functions/match-career/index.ts`
+- Update the system/user prompt so the model returns `reasoning` and `gaps` in **English, second-person** ("You already have…", "You still need…", gap items as short English skill names like "SQL", "Statistics").
+- Add an explicit instruction: *"Always write in English. Address the user as 'you'. Gaps must be short English skill names."*
+- No schema change — same `{ ranked: [{ id, name, score, reasoning, gaps[] }] }` shape.
+
+After deploy, click **Run AI analysis** again to regenerate `ranked` so existing Estonian/impersonal text is replaced. Old saved `career_plans` rows won't be rewritten — newest insert wins on load.
+
+## Out of scope
+- Backfilling/rewriting historical `career_plans` rows.
+- Changing the underlying skill taxonomy in `career_paths.json`.
 
