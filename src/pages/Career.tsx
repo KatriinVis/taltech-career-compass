@@ -169,14 +169,15 @@ export default function Career() {
         <Card>
           <CardHeader><CardTitle>Closing your career gap</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">Choose your goal</h3>
             <BottleDiagram skills={skills} interests={interests} paths={ranked.map((r) => r.name)} goal={selected} />
           </CardContent>
         </Card>
       )}
 
       {ranked.length > 0 && (
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="space-y-3">
+          <h2 className="text-xl font-semibold">Choose your goal</h2>
+          <div className="grid md:grid-cols-2 gap-4">
           {ranked.map((r) => {
             const path = courseProvider.paths().find((p) => p.name === r.name);
             const isSelected = selected === r.name;
@@ -215,6 +216,7 @@ export default function Career() {
               </Card>
             );
           })}
+          </div>
         </div>
       )}
     </div>
