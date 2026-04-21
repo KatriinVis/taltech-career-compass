@@ -10,7 +10,7 @@ const nav = [
   { to: "/timetable", label: "Timetable", icon: Calendar },
   { to: "/career", label: "Career", icon: Compass },
   { to: "/courses", label: "Courses", icon: GraduationCap },
-  { to: "/programme", label: "Õppekava", icon: BookOpen },
+  { to: "/programme", label: "Programme", icon: BookOpen },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 

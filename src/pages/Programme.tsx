@@ -27,9 +27,9 @@ type UC = {
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  completed: "Läbitud",
-  in_progress: "Pooleli",
-  planned: "Plaanis",
+  completed: "Completed",
+  in_progress: "In progress",
+  planned: "Planned",
 };
 
 export default function Programme() {
@@ -57,9 +57,9 @@ export default function Programme() {
       invalidateCourseCache();
       await refreshSync();
       const n = data?.taltech_msc?.totalInserted ?? 0;
-      toast({ title: "Sünk valmis", description: `${n} magistri-ainet lisatud / uuendatud` });
+      toast({ title: "Sync complete", description: `${n} master's courses added / updated` });
     } catch (e: any) {
-      toast({ title: "Sünk ebaõnnestus", description: e.message ?? String(e), variant: "destructive" });
+      toast({ title: "Sync failed", description: e.message ?? String(e), variant: "destructive" });
     } finally {
       setSyncing(null);
     }
@@ -88,19 +88,19 @@ export default function Programme() {
       target_ects: targetEcts,
       target_graduation: targetGrad || null,
     } as any).eq("id", user.id);
-    if (error) toast({ title: "Ei salvestatud", description: error.message, variant: "destructive" });
-    else toast({ title: "Salvestatud" });
+    if (error) toast({ title: "Could not save", description: error.message, variant: "destructive" });
+    else toast({ title: "Saved" });
   };
 
   const setStatus = async (id: string, status: UC["status"]) => {
     const { error } = await supabase.from("user_courses").update({ status }).eq("id", id);
-    if (error) return toast({ title: "Viga", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Error", description: error.message, variant: "destructive" });
     setCourses((cs) => cs.map((c) => (c.id === id ? { ...c, status } : c)));
   };
 
   const remove = async (id: string) => {
     const { error } = await supabase.from("user_courses").delete().eq("id", id);
-    if (error) return toast({ title: "Viga", description: error.message, variant: "destructive" });
+    if (error) return toast({ title: "Error", description: error.message, variant: "destructive" });
     setCourses((cs) => cs.filter((c) => c.id !== id));
   };
 
