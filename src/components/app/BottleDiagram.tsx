@@ -20,16 +20,16 @@ export default function BottleDiagram({ skills, interests, paths, goal }: Props)
   const layers = [
     {
       id: "skills" as const,
-      label: goalSkillSet ? "CV skills (matched to goal)" : "CV skills",
+      label: goalSkillSet ? "What you have (matched to your goal)" : "What you have",
       count: matchedSkills.length,
       total: skills.length,
       items: matchedSkills,
       others: otherSkills,
       w: 360,
     },
-    { id: "interests" as const, label: "Interests filter", count: interests.length, items: interests, w: 280 },
-    { id: "paths" as const, label: "Candidate paths", count: paths.length, items: paths, w: 200 },
-    { id: "goal" as const, label: "Chosen goal", count: goal ? 1 : 0, items: goal ? [goal] : [], w: 110 },
+    { id: "interests" as const, label: "What you're into", count: interests.length, items: interests, w: 280 },
+    { id: "paths" as const, label: "Paths that fit you", count: paths.length, items: paths, w: 200 },
+    { id: "goal" as const, label: "Your goal", count: goal ? 1 : 0, items: goal ? [goal] : [], w: 110 },
   ];
 
   return (
@@ -77,7 +77,7 @@ export default function BottleDiagram({ skills, interests, paths, goal }: Props)
             </div>
             {layer === "skills" && otherSkills.length > 0 && (
               <>
-                <div className="text-xs text-muted-foreground mt-3 mb-1.5">Other skills (not in current goal)</div>
+                <div className="text-xs text-muted-foreground mt-3 mb-1.5">Other skills you have (not needed for this goal)</div>
                 <div className="flex flex-wrap gap-1.5">
                   {otherSkills.map((it) => (
                     <span key={it} className="text-[11px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">
