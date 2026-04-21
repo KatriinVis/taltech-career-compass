@@ -1,5 +1,4 @@
-import taltech from "@/data/taltech_courses.json";
-import euroteq from "@/data/euroteq_courses.json";
+import { supabase } from "@/integrations/supabase/client";
 import paths from "@/data/career_paths.json";
 import syllabi from "@/data/syllabi.json";
 import uniEvents from "@/data/uni_events.json";
@@ -40,25 +39,114 @@ export type UniEvent = {
   kind: string;
 };
 
-const tagged = (arr: any[], source: "taltech" | "euroteq"): Course[] =>
-  arr.map((c) => ({ ...c, source }));
+export type SyncStatus = {
+  totalCourses: number;
+  taltechCount: number;
+  euroteqCount: number;
+  lastSyncAt: string | null;
+  lastSource: string | null;
+};
+
+let cache: Course[] | null = null;
+let cachePromise: Promise<Course[]> | null = null;
+const subscribers = new Set<() => void>();
+
+export function subscribeCourses(cb: () => void): () => void {
+  subscribers.add(cb);
+  return () => subscribers.delete(cb);
+}
+
+async function loadCourses(): Promise<Course[]> {
+  if (cache) return cache;
+  if (cachePromise) return cachePromise;
+  cachePromise = (async () => {
+    const [{ data: rows }, { data: skillRows }] = await Promise.all([
+      supabase.from("courses").select("*"),
+      supabase.from("course_skills").select("course_code, skill"),
+    ]);
+    const skillMap = new Map<string, string[]>();
+    for (const s of skillRows ?? []) {
+      const arr = skillMap.get(s.course_code) ?? [];
+      arr.push(s.skill);
+      skillMap.set(s.course_code, arr);
+    }
+    const list: Course[] = (rows ?? []).map((r: any) => ({
+      code: r.code,
+      name: r.name,
+      ects: Number(r.ects ?? 0),
+      semester: r.semester ?? undefined,
+      required: r.required ?? false,
+      day: r.day ?? undefined,
+      start: r.start ?? undefined,
+      end: r.end ?? undefined,
+      university: r.university ?? undefined,
+      format: r.format ?? undefined,
+      source: (r.source as "taltech" | "euroteq") ?? "taltech",
+      skills: skillMap.get(r.code) ?? [],
+    }));
+    cache = list;
+    subscribers.forEach((cb) => cb());
+    return list;
+  })();
+  return cachePromise;
+}
+
+export function invalidateCourseCache() {
+  cache = null;
+  cachePromise = null;
+  loadCourses().catch(() => {});
+}
+
+export async function fetchSyncStatus(): Promise<SyncStatus> {
+  const [{ count: total }, { count: tt }, { count: eq }, { data: last }] = await Promise.all([
+    supabase.from("courses").select("*", { count: "exact", head: true }),
+    supabase.from("courses").select("*", { count: "exact", head: true }).eq("source", "taltech"),
+    supabase.from("courses").select("*", { count: "exact", head: true }).eq("source", "euroteq"),
+    supabase.from("sync_runs").select("source, finished_at").order("finished_at", { ascending: false }).limit(1).maybeSingle(),
+  ]);
+  return {
+    totalCourses: total ?? 0,
+    taltechCount: tt ?? 0,
+    euroteqCount: eq ?? 0,
+    lastSyncAt: last?.finished_at ?? null,
+    lastSource: last?.source ?? null,
+  };
+}
+
+// Sync API kept as-is by exposing async-aware helpers. Existing callers using
+// the array-returning methods still work because we hydrate on first call.
+let warm = false;
+function warmSync() {
+  if (!warm) {
+    warm = true;
+    loadCourses().catch(() => { warm = false; });
+  }
+}
 
 export const courseProvider = {
-  taltech: (): Course[] => tagged(taltech as any[], "taltech"),
-  euroteq: (): Course[] => tagged(euroteq as any[], "euroteq"),
-  all: (): Course[] => [...tagged(taltech as any[], "taltech"), ...tagged(euroteq as any[], "euroteq")],
-  byCode: (code: string): Course | undefined =>
-    courseProvider.all().find((c) => c.code === code),
+  loadCourses,
+  taltech: (): Course[] => {
+    warmSync();
+    return (cache ?? []).filter((c) => c.source === "taltech");
+  },
+  euroteq: (): Course[] => {
+    warmSync();
+    return (cache ?? []).filter((c) => c.source === "euroteq");
+  },
+  all: (): Course[] => {
+    warmSync();
+    return cache ?? [];
+  },
+  byCode: (code: string): Course | undefined => (cache ?? []).find((c) => c.code === code),
   paths: (): CareerPath[] => paths as CareerPath[],
   pathById: (id: string): CareerPath | undefined =>
     (paths as CareerPath[]).find((p) => p.id === id),
   pathByName: (name: string): CareerPath | undefined =>
     (paths as CareerPath[]).find((p) => p.name === name),
-  electives: (): Course[] =>
-    [
-      ...tagged((taltech as any[]).filter((c) => !c.required), "taltech"),
-      ...tagged(euroteq as any[], "euroteq"),
-    ],
+  electives: (): Course[] => {
+    warmSync();
+    return (cache ?? []).filter((c) => c.source === "euroteq" || !c.required);
+  },
   syllabusFor: (code: string): Syllabus | undefined =>
     (syllabi as Record<string, Syllabus>)[code],
   uniEvents: (): UniEvent[] => uniEvents as UniEvent[],
@@ -88,3 +176,6 @@ export const courseProvider = {
     return null;
   },
 };
+
+// Pre-warm on import so first render has data
+loadCourses().catch(() => {});
