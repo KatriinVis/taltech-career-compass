@@ -118,7 +118,7 @@ export default function Career() {
       if (text.length < 50) throw new Error("Couldn't extract enough text from this file.");
       setCv(text);
       setExtracted(null);
-      toast({ title: "CV loaded", description: `${file.name} — ${text.length} characters extracted. Click "Run AI analysis" to update.` });
+      toast({ title: "CV loaded", description: `We extracted ${text.length} characters from ${file.name}. Click "Run AI analysis" when you're ready.` });
     } catch (err: any) {
       toast({ title: "Upload failed", description: err.message, variant: "destructive" });
     } finally {
