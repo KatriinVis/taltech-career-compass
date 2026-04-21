@@ -193,7 +193,8 @@ export default function Career() {
                   <p className="text-sm text-muted-foreground">{r.reasoning}</p>
                   {r.gaps?.length > 0 && (
                     <div>
-                      <div className="text-xs font-medium text-muted-foreground mb-1">Gaps you should close</div>
+                      <div className="text-xs font-medium text-muted-foreground mb-1">What you still need</div>
+                      <div className="text-xs text-muted-foreground mb-1.5">You're missing:</div>
                       <div className="flex flex-wrap gap-1.5">
                         {r.gaps.map((g) => <span key={g} className="text-xs px-2 py-0.5 rounded-full bg-secondary">{g}</span>)}
                       </div>
