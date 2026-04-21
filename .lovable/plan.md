@@ -1,80 +1,43 @@
 
 
-# Iterate: progress, syllabi, smarter timetable & courses
+# Timetable: week navigation + monthly overview
 
-Five connected changes across Dashboard, Career, Timetable, and Courses.
+Add week-by-week paging and a separate monthly view to `/timetable`.
 
-## 1. Dashboard — replace "Retention risk" with "Program progress"
+## What changes
 
-Drop the deadline-clustering risk metric. Replace the first stat card with **Program progress**:
+**1. View switcher at the top of `/timetable`**
+A `Tabs` control with two tabs: **Week** (default) and **Month**. State held locally; no URL changes.
 
-- Numerator = ECTS of courses currently in `schedule_events` where `course_code` matches a TalTech catalog entry (dedupe by code).
-- Denominator = 180 ECTS (3-year BSc default; configurable later).
-- Show `XX / 180 ECTS` + a progress bar + a small line "Required courses completed: N/M" (counted via `courseProvider.taltech()` where `required: true`).
-- Remove the upcoming-deadlines × low-check-ins risk math from `Dashboard.tsx`.
+**2. Week view — paginated by week**
+- Add a header bar above the weekly grid with `← Prev week`, a label like `Mon 21 Apr – Sun 27 Apr 2026`, `Next week →`, and a `This week` reset button.
+- Track `weekStart` (Monday) in state. `Prev`/`Next` shift it by 7 days.
+- The existing **"This week" agenda strip** is renamed to **"This week's items"** and filters one-off `schedule_events` (assignments, deadlines, uni events) whose `starts_at` falls inside `[weekStart, weekStart+7d)` — not just "next 7 days from today".
+- The weekly grid (Mon–Fri × 8:00–18:00) keeps showing recurring `kind: "class"` rows (they repeat every week), but each cell that overlaps the current week also renders one-off items at the matching hour with their `kindColor` badge so classes + assignments + events sit side-by-side.
+- Day column headers show the actual date (e.g. `Mon 21`) for the visible week.
 
-## 2. Bottle Diagram — only skills that apply to the chosen goal
+**3. Month view — calendar grid**
+- A 7-column × 5–6 row month grid (Mon-first), built with plain divs + Tailwind (no new deps). Header bar mirrors the week view: `← Prev month`, `April 2026`, `Next month →`, `Today`.
+- Each day cell shows the date number plus up to 3 stacked chips for items on that day:
+  - Recurring classes (expanded onto every matching weekday in the month) — chip uses `kindColor.class` + course code.
+  - One-off `schedule_events` (assignments, uni events, Moodle deadlines) — chip uses the matching `kindColor` and shows a short title.
+  - If more than 3 items on a day, append a `+N more` chip.
+- Click a day → opens a `Sheet` (right-side drawer) listing **all items for that day** with: time, title, source badge, `kind` badge, and — for assignments tied to a `course_code` — the course's **objectives/topics** pulled from `syllabi.json` via `courseProvider.syllabusFor(code)`. Each item has a `Remove` button (same as the existing list rows).
+- Today's cell gets a subtle ring; days outside the current month are muted.
 
-In `BottleDiagram.tsx`, filter the `skills` layer:
-
-- If `goal` is set, look up that path via `courseProvider.paths()` and intersect `skills` with `path.skills` (case-insensitive, normalize hyphens/spaces).
-- Show `matched / total` in the count line ("8 of 14 skills apply").
-- Add a second muted row of "Other skills" beneath the active list when the user clicks Skills, so nothing is hidden — just visually de-emphasized.
-- If no goal yet, behave as today (show all).
-
-`Career.tsx` already passes `selected` as `goal` — no caller changes needed.
-
-## 3. New "Syllabi" section under Timetable
-
-Add a **Syllabi** card on `/timetable` (below the weekly grid, above Moodle import):
-
-- For each course currently in the user's `schedule_events` (dedupe by `course_code`), render a collapsible row.
-- Each row shows: course name + code, weekly slot, **Assignments & deadlines** list, and **Suggested events/seminars**.
-- Data source: a new mock `src/data/syllabi.json` keyed by course code with `{ assignments: [{title, due, weight}], topics: [...] }`. Realistic mock data for the ~25 TalTech courses.
-- "Add to timetable" button on each assignment → inserts a `schedule_events` row with `kind: "assignment"`, `starts_at = due`, `source: "syllabus"`.
-- **University events feed**: a sibling card "Recommended events & seminars" driven by a new `src/data/uni_events.json` (10–15 mock seminars, hackathons, career fairs with `tags: string[]`, `starts_at`, `location`). Filter/rank by overlap between event tags and the selected career path's `skills`. Each event has "Add to calendar" → inserts as `kind: "event"`, `source: "uni"`.
-
-## 4. Timetable grid shows classes + assignments + events together
-
-Currently the grid only renders recurring `class` events. Extend it:
-
-- Keep the recurring weekly grid for `kind: "class"` (as today).
-- Add a new **"This week" agenda strip** above the grid: list of one-off `schedule_events` (assignments + events + deadlines) for the next 7 days, color-coded by `kind` using the existing `kindColor` map, sorted by date, with the source badge ("Moodle", "Syllabus", "Uni event").
-- The existing "Upcoming deadlines" card stays but is renamed "All upcoming items" and shows everything one-off (assignments + events + Moodle imports), not just Moodle.
-
-## 5. Courses page — electives + clash detection
-
-Two upgrades to `/courses`:
-
-**A. "Recommended electives" card at top**
-- Pulls the user's selected career path from `career_plans.selected_path`.
-- Ranks elective TalTech courses (`required: false`) + EuroTeQ courses by skill overlap with the path's `skills` array.
-- Shows top 6 with a "Why" chip (matched skills) and an "Add to timetable" button.
-
-**B. Clash badge on every course card**
-- Compute a `Set` of `{day_of_week, start_time}` from current `schedule_events` of `kind: "class"`.
-- For each TalTech course with `day` + `start`, mark it red **"Clashes with [course title]"** if its slot collides; otherwise green **"Free slot"**.
-- EuroTeQ courses (no day/start) get a neutral "Online/hybrid" badge.
-- The "Add to timetable" button is disabled when clashing, with a tooltip explaining why.
-
-**C. Optional "Match to job description" textarea**
-- A small input above the elective list: paste a job description; on submit, call the existing `match-career` edge function with `paths` swapped for the elective course list (or a new edge function `suggest-electives` if cleaner). For v1, do this client-side: tokenize the JD, intersect tokens with each course's `skills`, rank top 6. Keeps it free and instant.
+**4. Course objectives surfaced in both views**
+- Week view: in the renamed "This week's items" list, each assignment row with a `course_code` shows a one-line "Objectives: topic1 · topic2 · topic3" pulled from `syllabi.json` (truncated).
+- Month view: full objectives list inside the day-detail drawer.
 
 ## Files touched
 
-- `src/pages/Dashboard.tsx` — swap risk → progress card
-- `src/components/app/BottleDiagram.tsx` — goal-aware skill filter
-- `src/pages/Timetable.tsx` — agenda strip, syllabi card, events card, rename deadlines
-- `src/pages/Courses.tsx` — electives panel, clash detection, JD input, add-to-timetable
-- `src/data/syllabi.json` — NEW, mock syllabus per course
-- `src/data/uni_events.json` — NEW, mock university events
-- `src/lib/courseProvider.ts` — small helpers: `electives()`, `clashesWith(course, events)`, `syllabusFor(code)`, `eventsForPath(pathId)`
+- `src/pages/Timetable.tsx` — add `Tabs` switcher, `weekStart`/`monthStart` state, week navigation header, dated day columns, month grid, day-detail `Sheet`, objectives line.
 
-No schema changes — all new items reuse `schedule_events` with appropriate `kind`/`source` values.
+No new files, no schema changes, no new dependencies (we already have `Tabs`, `Sheet`, `Button`, `lucide-react` icons, and `syllabi.json`). Existing helpers `daysFromNow`, `kindColor`, `sourceLabel`, and `courseProvider.syllabusFor` are reused.
 
 ## Out of scope (defer)
 
-- Live Moodle/TalTech API scraping (still iCal + mock JSON)
-- Persisting user-dismissed event suggestions
-- Multi-program ECTS targets (hardcoded 180 for now)
+- Drag-to-reschedule
+- Editing recurring class times from the calendar
+- Year view / agenda export
 
