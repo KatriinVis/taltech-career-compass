@@ -56,8 +56,6 @@ const fmtMonthYear = (d: Date) => d.toLocaleDateString(undefined, { month: "long
 export default function Timetable() {
   const { user } = useAuth();
   const [events, setEvents] = useState<any[]>([]);
-  const [icsUrl, setIcsUrl] = useState("");
-  const [importing, setImporting] = useState(false);
   const [career, setCareer] = useState<any>(null);
   const [view, setView] = useState<"week" | "month">("week");
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
@@ -77,31 +75,6 @@ export default function Timetable() {
     setCareer(cp.data);
   };
   useEffect(() => { load(); }, [user]);
-
-  const importIcs = async (text: string) => {
-    if (!user) return;
-    const parsed = parseICS(text);
-    if (!parsed.length) { toast({ title: "No events found", variant: "destructive" }); return; }
-    const rows = parsed.slice(0, 100).map((e) => ({
-      user_id: user.id, title: e.title, kind: "assignment",
-      starts_at: e.start.toISOString(), ends_at: e.end?.toISOString() ?? null, source: "moodle",
-    }));
-    await supabase.from("schedule_events").delete().eq("user_id", user.id).eq("source", "moodle");
-    const { error } = await supabase.from("schedule_events").insert(rows);
-    if (error) { toast({ title: "Import failed", description: error.message, variant: "destructive" }); return; }
-    toast({ title: `Imported ${rows.length} Moodle deadline${rows.length === 1 ? "" : "s"}` });
-    load();
-  };
-
-  const importFromUrl = async () => {
-    if (!icsUrl.trim()) return;
-    setImporting(true);
-    try { const r = await fetch(icsUrl); await importIcs(await r.text()); }
-    catch (e: any) { toast({ title: "Could not fetch URL", description: e.message, variant: "destructive" }); }
-    finally { setImporting(false); }
-  };
-
-  const importFromFile = async (f: File) => { await importIcs(await f.text()); };
 
   const remove = async (id: string) => {
     await supabase.from("schedule_events").delete().eq("id", id);
