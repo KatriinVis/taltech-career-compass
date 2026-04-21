@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { courseProvider, type Course } from "@/lib/courseProvider";
+import { courseProvider, subscribeCourses, type Course } from "@/lib/courseProvider";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,6 +20,11 @@ export default function Courses() {
   const [career, setCareer] = useState<any>(null);
   const [jd, setJd] = useState("");
   const [jdSubmitted, setJdSubmitted] = useState("");
+  const [, forceTick] = useState(0);
+  useEffect(() => {
+    courseProvider.loadCourses().then(() => forceTick((n) => n + 1));
+    return subscribeCourses(() => forceTick((n) => n + 1));
+  }, []);
 
   const load = async () => {
     if (!user) return;
