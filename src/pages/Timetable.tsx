@@ -502,23 +502,6 @@ export default function Timetable() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader><CardTitle>Moodle iCal import</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid sm:grid-cols-[1fr_auto] gap-2">
-            <div>
-              <Label>Paste .ics URL</Label>
-              <Input value={icsUrl} onChange={(e) => setIcsUrl(e.target.value)} placeholder="https://moodle.taltech.ee/calendar/export…" />
-            </div>
-            <Button onClick={importFromUrl} disabled={importing} className="self-end">
-              {importing ? "Importing…" : "Import"}
-            </Button>
-          </div>
-          <div className="text-sm text-muted-foreground">or upload a file:</div>
-          <Input type="file" accept=".ics,text/calendar" onChange={(e) => e.target.files?.[0] && importFromFile(e.target.files[0])} />
-        </CardContent>
-      </Card>
-
       {(() => {
         const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
         const upcoming = oneoffs.filter((e) => new Date(e.starts_at) >= startOfToday);
