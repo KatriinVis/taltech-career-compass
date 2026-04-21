@@ -102,7 +102,7 @@ export default function Career() {
         await supabase.from("schedule_events").insert(events);
       }
     }
-    toast({ title: `Selected ${r.name}`, description: "Timetable updated with recommended courses." });
+    toast({ title: `You picked ${r.name}`, description: "Your timetable is updated with the recommended courses." });
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
