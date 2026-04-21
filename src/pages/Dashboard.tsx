@@ -6,14 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Activity, ArrowRight, Calendar, Compass, Sparkles } from "lucide-react";
+import { ArrowRight, Calendar, Compass, GraduationCap, Sparkles } from "lucide-react";
+import { courseProvider } from "@/lib/courseProvider";
+
+const ECTS_TARGET = 180;
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [career, setCareer] = useState<any>(null);
   const [events, setEvents] = useState<any[]>([]);
-  const [risk, setRisk] = useState(0);
   const [coach, setCoach] = useState<string>("");
   const [checkIn, setCheckIn] = useState("");
   const [loadingCoach, setLoadingCoach] = useState(false);
@@ -21,20 +23,14 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const [p, c, e, ci] = await Promise.all([
+      const [p, c, e] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
         supabase.from("career_plans").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
         supabase.from("schedule_events").select("*").eq("user_id", user.id),
-        supabase.from("check_ins").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(5),
       ]);
       setProfile(p.data);
       setCareer(c.data);
       setEvents(e.data ?? []);
-      // Simple retention risk: many upcoming deadlines + few recent check-ins
-      const upcoming = (e.data ?? []).filter((x) => x.starts_at && new Date(x.starts_at) > new Date()).length;
-      const recent = ci.data?.length ?? 0;
-      const r = Math.min(100, Math.max(0, upcoming * 8 + (5 - recent) * 10));
-      setRisk(r);
     })();
   }, [user]);
 
@@ -44,7 +40,7 @@ export default function Dashboard() {
     try {
       await supabase.from("check_ins").insert({ user_id: user.id, notes: checkIn, completed_blocks: 0, difficulty: 3 });
       const { data, error } = await supabase.functions.invoke("coach", {
-        body: { notes: checkIn, risk, career: career?.selected_path ?? null },
+        body: { notes: checkIn, career: career?.selected_path ?? null },
       });
       if (error) throw error;
       setCoach(data?.message ?? "");
@@ -57,8 +53,17 @@ export default function Dashboard() {
     }
   };
 
-  const riskLabel = risk < 30 ? "Low" : risk < 60 ? "Moderate" : "High";
-  const riskColor = risk < 30 ? "bg-success" : risk < 60 ? "bg-warning" : "bg-destructive";
+  // Program progress: ECTS of unique scheduled TalTech courses
+  const taltechCourses = courseProvider.taltech();
+  const requiredCourses = taltechCourses.filter((c) => c.required);
+  const scheduledCodes = new Set(
+    events.filter((e) => e.kind === "class" && e.course_code).map((e) => e.course_code as string),
+  );
+  const earnedEcts = taltechCourses
+    .filter((c) => scheduledCodes.has(c.code))
+    .reduce((sum, c) => sum + (c.ects ?? 0), 0);
+  const requiredDone = requiredCourses.filter((c) => scheduledCodes.has(c.code)).length;
+  const progressPct = Math.min(100, Math.round((earnedEcts / ECTS_TARGET) * 100));
 
   return (
     <div className="space-y-6">
@@ -69,13 +74,13 @@ export default function Dashboard() {
 
       <div className="grid md:grid-cols-3 gap-4">
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><Activity className="size-4" /> Retention risk</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2"><GraduationCap className="size-4" /> Program progress</CardTitle></CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold mb-2">{riskLabel}</div>
+            <div className="text-2xl font-bold mb-2">{earnedEcts} / {ECTS_TARGET} ECTS</div>
             <div className="h-2 bg-secondary rounded-full overflow-hidden">
-              <div className={`h-full ${riskColor} transition-all`} style={{ width: `${risk}%` }} />
+              <div className="h-full bg-primary transition-all" style={{ width: `${progressPct}%` }} />
             </div>
-            <p className="text-xs text-muted-foreground mt-2">Based on deadlines clustering + recent activity.</p>
+            <p className="text-xs text-muted-foreground mt-2">Required courses completed: {requiredDone}/{requiredCourses.length}</p>
           </CardContent>
         </Card>
         <Card>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { courseProvider } from "@/lib/courseProvider";
 
 type Props = {
   skills: string[];
@@ -10,8 +11,22 @@ type Props = {
 export default function BottleDiagram({ skills, interests, paths, goal }: Props) {
   const [layer, setLayer] = useState<"skills" | "interests" | "paths" | "goal" | null>(null);
 
+  const norm = (s: string) => s.toLowerCase().replace(/[\s_]+/g, "-");
+  const goalPath = goal ? courseProvider.pathByName(goal) : undefined;
+  const goalSkillSet = goalPath ? new Set(goalPath.skills.map(norm)) : null;
+  const matchedSkills = goalSkillSet ? skills.filter((s) => goalSkillSet.has(norm(s))) : skills;
+  const otherSkills = goalSkillSet ? skills.filter((s) => !goalSkillSet.has(norm(s))) : [];
+
   const layers = [
-    { id: "skills" as const, label: "CV skills", count: skills.length, items: skills, w: 360 },
+    {
+      id: "skills" as const,
+      label: goalSkillSet ? "CV skills (matched to goal)" : "CV skills",
+      count: matchedSkills.length,
+      total: skills.length,
+      items: matchedSkills,
+      others: otherSkills,
+      w: 360,
+    },
     { id: "interests" as const, label: "Interests filter", count: interests.length, items: interests, w: 280 },
     { id: "paths" as const, label: "Candidate paths", count: paths.length, items: paths, w: 200 },
     { id: "goal" as const, label: "Chosen goal", count: goal ? 1 : 0, items: goal ? [goal] : [], w: 110 },
@@ -43,7 +58,9 @@ export default function BottleDiagram({ skills, interests, paths, goal }: Props)
                 {l.label}
               </text>
               <text x={200} y={y + 38} textAnchor="middle" fill="hsl(var(--primary-foreground))" fontSize="11" opacity="0.85">
-                {l.count} item{l.count === 1 ? "" : "s"}
+                {l.id === "skills" && (l as any).total != null && (l as any).total !== l.count
+                  ? `${l.count} of ${(l as any).total} skill${(l as any).total === 1 ? "" : "s"} apply`
+                  : `${l.count} item${l.count === 1 ? "" : "s"}`}
               </text>
             </g>
           );
@@ -58,6 +75,18 @@ export default function BottleDiagram({ skills, interests, paths, goal }: Props)
                 <span key={it} className="text-xs px-2 py-0.5 rounded-full bg-card border">{it}</span>
               )) || <span className="text-xs text-muted-foreground">No items.</span>}
             </div>
+            {layer === "skills" && otherSkills.length > 0 && (
+              <>
+                <div className="text-xs text-muted-foreground mt-3 mb-1.5">Other skills (not in current goal)</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {otherSkills.map((it) => (
+                    <span key={it} className="text-[11px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">
+                      {it}
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
           </>
         ) : (
           <div className="text-sm text-muted-foreground">Click any layer to see what was filtered and why.</div>
