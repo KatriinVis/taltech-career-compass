@@ -169,7 +169,6 @@ export default function Career() {
         <Card>
           <CardHeader><CardTitle>Closing your career gap</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">Choose your goal</h3>
             <BottleDiagram skills={skills} interests={interests} paths={ranked.map((r) => r.name)} goal={selected} />
           </CardContent>
         </Card>
