@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { courseProvider, subscribeCourses, type Course } from "@/lib/courseProvider";
+import { courseProvider, subscribeCourses, searchCatalog, listFaculties, type Course, type CatalogCourse } from "@/lib/courseProvider";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { Sparkles, Plus, AlertTriangle, Check, Globe } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sparkles, Plus, AlertTriangle, Check, Globe, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const DAY_NAMES = ["", "Mon", "Tue", "Wed", "Thu", "Fri"];
@@ -21,10 +22,57 @@ export default function Courses() {
   const [jd, setJd] = useState("");
   const [jdSubmitted, setJdSubmitted] = useState("");
   const [, forceTick] = useState(0);
+  // Catalog browse state
+  const [catQuery, setCatQuery] = useState("");
+  const [catFaculty, setCatFaculty] = useState<string | null>(null);
+  const [catPage, setCatPage] = useState(0);
+  const [catRows, setCatRows] = useState<CatalogCourse[]>([]);
+  const [catTotal, setCatTotal] = useState(0);
+  const [catLoading, setCatLoading] = useState(false);
+  const [faculties, setFaculties] = useState<string[]>([]);
+  const PAGE_SIZE = 50;
   useEffect(() => {
     courseProvider.loadCourses().then(() => forceTick((n) => n + 1));
     return subscribeCourses(() => forceTick((n) => n + 1));
   }, []);
+
+  useEffect(() => {
+    listFaculties().then(setFaculties).catch(() => {});
+  }, []);
+
+  const loadCatalog = async () => {
+    setCatLoading(true);
+    try {
+      const r = await searchCatalog({
+        query: catQuery || undefined,
+        faculty: catFaculty,
+        source: tab === "all" ? null : tab,
+        page: catPage,
+        pageSize: PAGE_SIZE,
+      });
+      setCatRows(r.rows);
+      setCatTotal(r.count);
+    } catch { }
+    setCatLoading(false);
+  };
+
+  useEffect(() => {
+    loadCatalog();
+  }, [catQuery, catFaculty, catPage, tab]);
+
+  const addToCurriculum = async (c: CatalogCourse) => {
+    if (!user) return;
+    const { error } = await supabase.from("user_courses").insert({
+      user_id: user.id,
+      code: c.code,
+      name: c.name,
+      ects: c.ects,
+      semester: c.semester,
+      status: "planned",
+    });
+    if (error) { toast({ title: "Viga", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Lisatud õppekavasse", description: `${c.code} · ${c.name}` });
+  };
 
   const load = async () => {
     if (!user) return;
@@ -222,41 +270,55 @@ export default function Courses() {
         </CardContent>
       </Card>
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="flex gap-1 bg-secondary rounded-md p-1">
-          {(["all", "taltech", "euroteq"] as const).map((t) => (
-            <button key={t} onClick={() => setTab(t)} className={`px-3 py-1.5 text-sm rounded ${tab === t ? "bg-card shadow-sm" : "text-muted-foreground"}`}>
-              {t === "all" ? "All" : t === "taltech" ? "TalTech" : "EuroTeQ"}
-            </button>
-          ))}
-        </div>
-        <Input placeholder="Search by code, name, or skill…" value={q} onChange={(e) => setQ(e.target.value)} />
-      </div>
-      <div className="grid md:grid-cols-2 gap-3">
-        {courses.map((c) => (
-          <Card key={c.code}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center justify-between gap-2">
-                <span className="truncate">{c.name}</span>
-                <span className="text-xs font-mono text-muted-foreground shrink-0">{c.code}</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="text-xs text-muted-foreground">
-                {c.source === "taltech" ? `TalTech · ${c.required ? "Required" : "Elective"}` : `EuroTeQ · ${c.university}`} · {c.ects} ECTS
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><BookOpen className="size-4" /> Ainekataloog</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex gap-1 bg-secondary rounded-md p-1">
+              {(["all", "taltech", "euroteq"] as const).map((t) => (
+                <button key={t} onClick={() => { setTab(t); setCatPage(0); }} className={`px-3 py-1.5 text-sm rounded ${tab === t ? "bg-card shadow-sm" : "text-muted-foreground"}`}>
+                  {t === "all" ? "Kõik" : t === "taltech" ? "TalTech" : "EuroTeQ"}
+                </button>
+              ))}
+            </div>
+            <Input placeholder="Otsi koodi, nime järgi…" value={catQuery} onChange={(e) => { setCatQuery(e.target.value); setCatPage(0); }} />
+            {faculties.length > 0 && (
+              <Select value={catFaculty ?? "__all__"} onValueChange={(v) => { setCatFaculty(v === "__all__" ? null : v); setCatPage(0); }}>
+                <SelectTrigger className="w-48"><SelectValue placeholder="Teaduskond" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">Kõik teaduskonnad</SelectItem>
+                  {faculties.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+          <div className="text-xs text-muted-foreground">{catTotal} ainet leitud · lehekülg {catPage + 1}/{Math.max(1, Math.ceil(catTotal / PAGE_SIZE))}</div>
+          <div className="grid md:grid-cols-2 gap-3">
+            {catRows.map((c) => (
+              <div key={c.code} className="rounded-lg border p-3 flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="font-medium text-sm truncate">{c.name}</div>
+                  <div className="text-xs font-mono text-muted-foreground">{c.code} · {c.ects ?? "?"} EAP · {c.faculty ?? c.source}</div>
+                </div>
+                <Button size="sm" variant="outline" onClick={() => addToCurriculum(c)} title="Lisa minu õppekavasse">
+                  <Plus className="size-3 mr-1" /> Lisa
+                </Button>
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {c.skills.slice(0, 6).map((s) => <span key={s} className="text-[11px] px-2 py-0.5 rounded-full bg-secondary">{s}</span>)}
-              </div>
-              <div className="flex items-center justify-between gap-2 pt-1">
-                {renderClashBadge(c)}
-                {renderAddButton(c)}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-        {!courses.length && <div className="text-sm text-muted-foreground">No matches.</div>}
-      </div>
+            ))}
+            {!catLoading && catRows.length === 0 && <div className="text-sm text-muted-foreground">Ei leitud.</div>}
+          </div>
+          <div className="flex justify-center gap-2">
+            <Button size="sm" variant="outline" disabled={catPage === 0} onClick={() => setCatPage((p) => p - 1)}>
+              <ChevronLeft className="size-4" /> Eelmine
+            </Button>
+            <Button size="sm" variant="outline" disabled={(catPage + 1) * PAGE_SIZE >= catTotal} onClick={() => setCatPage((p) => p + 1)}>
+              Järgmine <ChevronRight className="size-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

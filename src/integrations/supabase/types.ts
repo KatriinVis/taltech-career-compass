@@ -93,14 +93,21 @@ export type Database = {
       }
       courses: {
         Row: {
+          assessment: string | null
           code: string
           day: number | null
           description: string | null
           ects: number | null
           end: string | null
+          faculty: string | null
           format: string | null
+          instructor: string | null
+          language: string[] | null
           last_synced_at: string
+          learning_outcomes: string[] | null
+          level: string | null
           name: string
+          name_en: string | null
           required: boolean | null
           room: string | null
           semester: string | null
@@ -110,14 +117,21 @@ export type Database = {
           url: string | null
         }
         Insert: {
+          assessment?: string | null
           code: string
           day?: number | null
           description?: string | null
           ects?: number | null
           end?: string | null
+          faculty?: string | null
           format?: string | null
+          instructor?: string | null
+          language?: string[] | null
           last_synced_at?: string
+          learning_outcomes?: string[] | null
+          level?: string | null
           name: string
+          name_en?: string | null
           required?: boolean | null
           room?: string | null
           semester?: string | null
@@ -127,14 +141,21 @@ export type Database = {
           url?: string | null
         }
         Update: {
+          assessment?: string | null
           code?: string
           day?: number | null
           description?: string | null
           ects?: number | null
           end?: string | null
+          faculty?: string | null
           format?: string | null
+          instructor?: string | null
+          language?: string[] | null
           last_synced_at?: string
+          learning_outcomes?: string[] | null
+          level?: string | null
           name?: string
+          name_en?: string | null
           required?: boolean | null
           room?: string | null
           semester?: string | null
@@ -296,6 +317,7 @@ export type Database = {
           finished_at: string
           id: string
           inserted: number | null
+          prefix: string | null
           source: string
           status: string
           updated: number | null
@@ -306,6 +328,7 @@ export type Database = {
           finished_at?: string
           id?: string
           inserted?: number | null
+          prefix?: string | null
           source: string
           status: string
           updated?: number | null
@@ -316,6 +339,7 @@ export type Database = {
           finished_at?: string
           id?: string
           inserted?: number | null
+          prefix?: string | null
           source?: string
           status?: string
           updated?: number | null

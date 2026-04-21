@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { Calendar as CalendarIcon, CheckCircle2, Circle, Clock, Trash2 } from "lucide-react";
+import { Calendar as CalendarIcon, CheckCircle2, Circle, Clock, RefreshCw, Trash2 } from "lucide-react";
+import { fetchSyncStatus, invalidateCourseCache, type SyncStatus } from "@/lib/courseProvider";
 
 type UC = {
   id: string;
@@ -39,6 +40,30 @@ export default function Programme() {
   const [progName, setProgName] = useState("");
   const [targetEcts, setTargetEcts] = useState(120);
   const [targetGrad, setTargetGrad] = useState("");
+  const [sync, setSync] = useState<SyncStatus | null>(null);
+  const [syncing, setSyncing] = useState<string | null>(null);
+
+  const refreshSync = () => fetchSyncStatus().then(setSync).catch(() => {});
+  useEffect(() => { refreshSync(); }, []);
+
+  const runBatch = async (batch: "it" | "eng" | "biz" | "all") => {
+    setSyncing(batch);
+    try {
+      const payload = batch === "all"
+        ? { scope: "taltech-msc" }
+        : { scope: "taltech-msc", batch };
+      const { data, error } = await supabase.functions.invoke("sync-courses", { body: payload });
+      if (error) throw error;
+      invalidateCourseCache();
+      await refreshSync();
+      const n = data?.taltech_msc?.totalInserted ?? 0;
+      toast({ title: "Sünk valmis", description: `${n} magistri-ainet lisatud / uuendatud` });
+    } catch (e: any) {
+      toast({ title: "Sünk ebaõnnestus", description: e.message ?? String(e), variant: "destructive" });
+    } finally {
+      setSyncing(null);
+    }
+  };
 
   const load = async () => {
     if (!user) return;
@@ -174,6 +199,44 @@ export default function Programme() {
             <span><Clock className="inline size-3" /> Pooleli {totals.in_progress} EAP</span>
             <span><Circle className="inline size-3" /> Plaanis {totals.planned} EAP</span>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>TalTech magistri-kataloog</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-sm text-muted-foreground">
+            Avalik ÕIS-i kataloog (<span className="font-medium text-foreground">ois2.taltech.ee</span>) — ainult magistri-tasemel ained (kood 8xxx/9xxx).
+          </div>
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div><div className="text-2xl font-display">{sync?.totalCourses ?? "—"}</div><div className="text-muted-foreground">kokku</div></div>
+            <div><div className="text-2xl font-display">{sync?.taltechCount ?? "—"}</div><div className="text-muted-foreground">TalTech</div></div>
+            <div><div className="text-2xl font-display">{sync?.euroteqCount ?? "—"}</div><div className="text-muted-foreground">EuroTeQ</div></div>
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {sync?.lastSyncAt ? `Viimati: ${new Date(sync.lastSyncAt).toLocaleString()} (${sync.lastSource})` : "Veel pole sünkinud."}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="secondary" disabled={!!syncing} onClick={() => runBatch("it")}>
+              <RefreshCw className={`h-3 w-3 mr-1 ${syncing === "it" ? "animate-spin" : ""}`} />
+              IT (ITI/ITA/ITC/ITV/ITP)
+            </Button>
+            <Button size="sm" variant="secondary" disabled={!!syncing} onClick={() => runBatch("eng")}>
+              <RefreshCw className={`h-3 w-3 mr-1 ${syncing === "eng" ? "animate-spin" : ""}`} />
+              Inseneriteadused (MAT/MEC/EER/EMR/EAA)
+            </Button>
+            <Button size="sm" variant="secondary" disabled={!!syncing} onClick={() => runBatch("biz")}>
+              <RefreshCw className={`h-3 w-3 mr-1 ${syncing === "biz" ? "animate-spin" : ""}`} />
+              Majandus (TMJ/YFR/EJR)
+            </Button>
+            <Button size="sm" disabled={!!syncing} onClick={() => runBatch("all")}>
+              <RefreshCw className={`h-3 w-3 mr-1 ${syncing === "all" ? "animate-spin" : ""}`} />
+              Sünki kõik MSc
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Täis-sünk võtab ~10–15 min ja ~500–800 Firecrawl krediiti. Batch-i kaupa sünkimine on soovitatud.
+          </p>
         </CardContent>
       </Card>
 
