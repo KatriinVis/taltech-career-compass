@@ -66,6 +66,7 @@ export default function Timetable() {
     const n = new Date(); n.setDate(1); n.setHours(0, 0, 0, 0); return n;
   });
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [hideCompleted, setHideCompleted] = useState(false);
 
   const load = async () => {
     if (!user) return;
@@ -546,11 +547,26 @@ export default function Timetable() {
         </CardContent>
       </Card>
 
-      {oneoffs.length > 0 && (
+      {(() => {
+        const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
+        const upcoming = oneoffs.filter((e) => new Date(e.starts_at) >= startOfToday);
+        const visible = hideCompleted ? upcoming.filter((e) => !e.completed_at) : upcoming;
+        if (upcoming.length === 0) return null;
+        return (
         <Card>
-          <CardHeader><CardTitle>All upcoming items</CardTitle></CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle>All upcoming items ({visible.length})</CardTitle>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground font-normal cursor-pointer">
+              <Checkbox
+                checked={hideCompleted}
+                onCheckedChange={(v) => setHideCompleted(!!v)}
+                aria-label="Hide completed"
+              />
+              Hide completed
+            </label>
+          </CardHeader>
           <CardContent className="space-y-2">
-            {oneoffs.map((e) => {
+            {visible.map((e) => {
               const done = !!e.completed_at;
               return (
               <div key={e.id} className="flex items-center justify-between rounded-md border p-2 text-sm">
@@ -574,7 +590,8 @@ export default function Timetable() {
             })}
           </CardContent>
         </Card>
-      )}
+        );
+      })()}
     </div>
   );
 }
