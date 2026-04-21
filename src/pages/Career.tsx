@@ -156,9 +156,9 @@ export default function Career() {
             >
               <Upload className="size-4" /> {uploading ? "Reading…" : "Upload CV (PDF, DOCX, TXT)"}
             </Button>
-            <span className="text-xs text-muted-foreground">or paste below</span>
+            <span className="text-xs text-muted-foreground">or paste yours below</span>
           </div>
-          <Textarea value={cv} onChange={(e) => setCv(e.target.value)} rows={6} placeholder="Paste your CV text here…" />
+          <Textarea value={cv} onChange={(e) => setCv(e.target.value)} rows={6} placeholder="Paste your CV text here so we can analyze it…" />
           <Button onClick={runAnalysis} disabled={loading || !cv.trim()}>
             <Sparkles className="size-4" /> {loading ? "Analyzing…" : "Run AI analysis"}
           </Button>
