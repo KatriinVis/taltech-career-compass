@@ -66,6 +66,7 @@ export default function Timetable() {
     const n = new Date(); n.setDate(1); n.setHours(0, 0, 0, 0); return n;
   });
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [hideCompleted, setHideCompleted] = useState(false);
 
   const load = async () => {
     if (!user) return;
