@@ -47,6 +47,51 @@ export type SyncStatus = {
   lastSource: string | null;
 };
 
+export type CatalogCourse = {
+  code: string;
+  name: string;
+  name_en: string | null;
+  ects: number | null;
+  faculty: string | null;
+  level: string | null;
+  semester: string | null;
+  source: string;
+  language: string[] | null;
+};
+
+export async function searchCatalog(opts: {
+  query?: string;
+  faculty?: string | null;
+  level?: string | null;
+  source?: string | null;
+  page?: number;
+  pageSize?: number;
+}): Promise<{ rows: CatalogCourse[]; count: number }> {
+  const page = opts.page ?? 0;
+  const pageSize = opts.pageSize ?? 50;
+  let q = supabase
+    .from("courses")
+    .select("code,name,name_en,ects,faculty,level,semester,source,language", { count: "exact" });
+  if (opts.query?.trim()) {
+    const s = opts.query.trim().replace(/[%]/g, "");
+    q = q.or(`code.ilike.%${s}%,name.ilike.%${s}%,name_en.ilike.%${s}%`);
+  }
+  if (opts.faculty) q = q.eq("faculty", opts.faculty);
+  if (opts.level) q = q.eq("level", opts.level);
+  if (opts.source) q = q.eq("source", opts.source);
+  q = q.order("code").range(page * pageSize, page * pageSize + pageSize - 1);
+  const { data, count, error } = await q;
+  if (error) throw error;
+  return { rows: (data as any) ?? [], count: count ?? 0 };
+}
+
+export async function listFaculties(): Promise<string[]> {
+  const { data } = await supabase.from("courses").select("faculty").not("faculty", "is", null);
+  const set = new Set<string>();
+  for (const r of (data as any[]) ?? []) if (r.faculty) set.add(r.faculty);
+  return [...set].sort();
+}
+
 let cache: Course[] | null = null;
 let cachePromise: Promise<Course[]> | null = null;
 const subscribers = new Set<() => void>();
