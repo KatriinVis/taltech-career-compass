@@ -10,6 +10,20 @@ import { toast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sparkles, Plus, AlertTriangle, Check, Globe, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { checkFit, type FitResult } from "@/lib/scheduleFit";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const DAY_NAMES = ["", "Mon", "Tue", "Wed", "Thu", "Fri"];
 
@@ -31,6 +45,8 @@ export default function Courses() {
   const [catLoading, setCatLoading] = useState(false);
   const [faculties, setFaculties] = useState<string[]>([]);
   const PAGE_SIZE = 50;
+  const [hideConflicts, setHideConflicts] = useState(false);
+  const [pendingConflict, setPendingConflict] = useState<{ course: CatalogCourse; titles: string[] } | null>(null);
   useEffect(() => {
     courseProvider.loadCourses().then(() => forceTick((n) => n + 1));
     return subscribeCourses(() => forceTick((n) => n + 1));
