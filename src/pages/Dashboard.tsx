@@ -7,15 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { ArrowRight, Calendar, Compass, GraduationCap, Sparkles } from "lucide-react";
-import { courseProvider } from "@/lib/courseProvider";
-
-const ECTS_TARGET = 180;
-
 export default function Dashboard() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [career, setCareer] = useState<any>(null);
   const [events, setEvents] = useState<any[]>([]);
+  const [userCourses, setUserCourses] = useState<any[]>([]);
   const [coach, setCoach] = useState<string>("");
   const [checkIn, setCheckIn] = useState("");
   const [loadingCoach, setLoadingCoach] = useState(false);
@@ -23,14 +20,16 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const [p, c, e] = await Promise.all([
+      const [p, c, e, uc] = await Promise.all([
         supabase.from("profiles").select("*").eq("id", user.id).maybeSingle(),
         supabase.from("career_plans").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
         supabase.from("schedule_events").select("*").eq("user_id", user.id),
+        supabase.from("user_courses").select("ects,status").eq("user_id", user.id),
       ]);
       setProfile(p.data);
       setCareer(c.data);
       setEvents(e.data ?? []);
+      setUserCourses(uc.data ?? []);
     })();
   }, [user]);
 
@@ -53,17 +52,13 @@ export default function Dashboard() {
     }
   };
 
-  // Program progress: ECTS of unique scheduled TalTech courses
-  const taltechCourses = courseProvider.taltech();
-  const requiredCourses = taltechCourses.filter((c) => c.required);
-  const scheduledCodes = new Set(
-    events.filter((e) => e.kind === "class" && e.course_code).map((e) => e.course_code as string),
-  );
-  const earnedEcts = taltechCourses
-    .filter((c) => scheduledCodes.has(c.code))
-    .reduce((sum, c) => sum + (c.ects ?? 0), 0);
-  const requiredDone = requiredCourses.filter((c) => scheduledCodes.has(c.code)).length;
-  const progressPct = Math.min(100, Math.round((earnedEcts / ECTS_TARGET) * 100));
+  // Program progress: based on user's uploaded syllabi (user_courses)
+  const ECTS_TARGET = (profile as any)?.target_ects ?? 120;
+  const earnedEcts = userCourses
+    .filter((c) => c.status === "completed")
+    .reduce((s, c) => s + (Number(c.ects) || 0), 0);
+  const inProgress = userCourses.filter((c) => c.status === "in_progress").length;
+  const progressPct = Math.min(100, Math.round((earnedEcts / Math.max(1, ECTS_TARGET)) * 100));
 
   return (
     <div className="space-y-6">
@@ -80,7 +75,7 @@ export default function Dashboard() {
             <div className="h-2 bg-secondary rounded-full overflow-hidden">
               <div className="h-full bg-primary transition-all" style={{ width: `${progressPct}%` }} />
             </div>
-            <p className="text-xs text-muted-foreground mt-2">Required courses completed: {requiredDone}/{requiredCourses.length}</p>
+            <p className="text-xs text-muted-foreground mt-2">Pooleli: {inProgress} ainet</p>
           </CardContent>
         </Card>
         <Card>

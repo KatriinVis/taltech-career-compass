@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { fetchSyncStatus, invalidateCourseCache, type SyncStatus } from "@/lib/courseProvider";
 import { RefreshCw } from "lucide-react";
+import SyllabusUploader from "@/components/app/SyllabusUploader";
 
 export default function Settings() {
   const { user } = useAuth();
@@ -73,6 +74,7 @@ export default function Settings() {
           <Button onClick={save}>Save</Button>
         </CardContent>
       </Card>
+      <SyllabusUploader />
       <Card>
         <CardHeader><CardTitle>Course catalog</CardTitle></CardHeader>
         <CardContent className="space-y-4">

@@ -12,6 +12,7 @@ import Timetable from "./pages/Timetable.tsx";
 import Career from "./pages/Career.tsx";
 import Courses from "./pages/Courses.tsx";
 import Settings from "./pages/Settings.tsx";
+import Programme from "./pages/Programme.tsx";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/app/ProtectedRoute";
 import AppLayout from "./components/app/AppLayout";
@@ -37,6 +38,7 @@ const App = () => (
                 <Route path="/timetable" element={<Timetable />} />
                 <Route path="/career" element={<Career />} />
                 <Route path="/courses" element={<Courses />} />
+                <Route path="/programme" element={<Programme />} />
                 <Route path="/settings" element={<Settings />} />
               </Route>
             </Route>

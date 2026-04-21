@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { Calendar, Compass, GraduationCap, LayoutDashboard, LogOut, Settings } from "lucide-react";
+import { BookOpen, Calendar, Compass, GraduationCap, LayoutDashboard, LogOut, Settings } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,7 @@ const nav = [
   { to: "/timetable", label: "Timetable", icon: Calendar },
   { to: "/career", label: "Career", icon: Compass },
   { to: "/courses", label: "Courses", icon: GraduationCap },
+  { to: "/programme", label: "Õppekava", icon: BookOpen },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
