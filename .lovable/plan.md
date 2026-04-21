@@ -1,104 +1,92 @@
 
 
-# Apply MESA.I brand: colors, voice, and copy
+# Connect MESA.I to live TalTech & EuroTeQ course data
 
-Align the entire app with the MESA.I pitch deck — visual palette, headline voice, and feature wording.
+Replace the static JSON catalogs with real data scraped from the two sources you specified, stored in Lovable Cloud, and refreshed on demand.
 
-## Brand foundations (from the deck)
+## Sources
 
-- **Name**: MESA.I
-- **Tagline**: "From curriculum blindness to a career-driven smart timetable"
-- **Promise**: "Your academic-to-career operating system — connecting what you study to what you actually achieve"
-- **Three pillars**: **Degree** · **Skills** · **Career**
-- **Voice**: warm, direct, student-first; short sentences; verbs over jargon; no "retention risk"-style corporate speak
+- **TalTech** — `https://tunniplaan.taltech.ee/#/public` (public timetable). Unlike ÕIS, this one exposes real **scheduled slots** (day, start, end, room), which is exactly what powers the timetable + clash detection.
+- **EuroTeQ** — `https://eduxchange.eu/euroteq/for-students-taltech/explore` (official EduXchange portal for TalTech students). Provides title, host university, ECTS, format, and description.
 
-## Color palette (HSL tokens)
+## Architecture
 
-| Token | Value | Use |
-|---|---|---|
-| `--primary` | `224 60% 15%` | Deep navy — wordmark, headings, primary buttons |
-| `--primary-foreground` | `0 0% 100%` | White on navy |
-| `--primary-glow` | `250 50% 78%` | Lavender bubble accent |
-| `--accent` | `32 55% 58%` | Warm wood-tan (mascot) — chips, highlights |
-| `--accent-foreground` | `224 60% 15%` | Navy on tan |
-| `--secondary` | `250 45% 96%` | Soft lavender wash — cards, hover states |
-| `--background` | `0 0% 100%` | True white |
-| `--foreground` | `224 60% 15%` | Navy text |
-| `--muted` | `250 30% 97%` | Surface fills |
-| `--muted-foreground` | `224 20% 45%` | Secondary text |
-| `--success` | `145 50% 50%` | Mint — "Free slot", completed |
-| `--warning` | `38 92% 58%` | Amber — clashes, deadlines soon |
-| `--destructive` | `0 75% 58%` | Red — hard clash, errors |
-| `--border` / `--input` | `250 30% 90%` | Lavender-tinted borders |
-| `--ring` | `224 60% 15%` | Focus ring navy |
-| `--radius` | `0.75rem` | Friendlier rounded corners |
+```text
+[ tunniplaan.taltech.ee ]      [ eduxchange.eu/euroteq ]
+            \                          /
+             \                        /
+        ┌─────────────────────────────┐
+        │  edge fn: sync-courses      │  ← Firecrawl (JS-rendered scrape)
+        │  - parses both sources      │
+        │  - normalises to Course     │
+        │  - upserts to DB            │
+        └─────────────┬───────────────┘
+                      │
+              ┌───────▼────────┐
+              │ courses (DB)   │  ← public read, service-role write
+              │ course_skills  │
+              └───────┬────────┘
+                      │
+        ┌─────────────▼──────────────┐
+        │ src/lib/courseProvider.ts  │  ← same API: taltech(), euroteq(),
+        │   (DB-backed, React Query) │     electives(), byCode(), clashesWith()
+        └─────────────┬──────────────┘
+                      │
+   Courses · Career · Timetable · Dashboard (no changes)
+```
 
-Gradients & shadows:
-- `--gradient-primary: linear-gradient(135deg, hsl(224 60% 15%), hsl(250 50% 70%))`
-- `--gradient-soft: linear-gradient(180deg, hsl(0 0% 100%), hsl(250 45% 97%))`
-- `--shadow-card: 0 1px 3px hsl(224 60% 15% / 0.06), 0 4px 12px hsl(250 50% 70% / 0.10)`
-- `--shadow-elegant: 0 10px 30px -10px hsl(224 60% 15% / 0.20)`
+## Why we need Firecrawl
 
-Fonts: keep Inter for body; add **Nunito** (700/800/900) via Google Fonts as `.font-display` for headings to match the deck's bold rounded look.
+Both URLs are **JavaScript-rendered single-page apps** (`tunniplaan.taltech.ee` is a hash-routed Vue app; EduXchange is a React app). A plain `fetch` returns an empty HTML shell. We need a JS-capable scraper. Firecrawl is the cleanest fit, available as a Lovable connector, and we already have the integration pattern.
 
-## Logo & mascot
+You'll be prompted to connect Firecrawl on first sync. No API key from you — the connector handles it.
 
-- Save the MESA.I mascot from the pitch deck as `src/assets/mesai-logo.png` and `public/mesai-favicon.png`.
-- New `src/components/MesaLogo.tsx` — renders mascot + "MESA.I" wordmark in navy. Props: `size?: "sm" | "md" | "lg"`, `wordmark?: boolean`. Used in landing header, sidebar, mobile bar, auth.
+## Database
 
-## Copy rewrite (every "Career Driver" → MESA.I voice)
+New tables (RLS: public read, service-role write):
 
-**Landing (`Index.tsx`)**
-- Eyebrow: "AI mobility agent for TalTech & EuroTeQ"
-- H1: "From curriculum blindness to a **career-driven** smart timetable."
-- Sub: "MESA.I connects what you study to what you actually achieve — your courses, deadlines, and career goals in one adaptive plan."
-- CTAs: "Start free" / "I already have an account"
-- Three feature cards aligned with the deck's pillars:
-  - **Degree** — "See your full program at a glance. Track ECTS, required courses, and what's left."
-  - **Skills** — "Grow beyond the syllabus. MESA.I surfaces seminars, hackathons, and electives that build the skills you need."
-  - **Career** — "Pick courses that lead somewhere. Upload your CV, set a goal, get a ranked plan."
-- Footer: "Built with TalTech & EuroTeQ students · MESA.I pilot v1"
+- **`courses`** — `code` (PK), `name`, `ects`, `semester`, `required`, `day`, `start`, `end`, `room`, `format`, `university`, `source` (`'taltech'` | `'euroteq'`), `description`, `url`, `last_synced_at`
+- **`course_skills`** — `(course_code, skill)` composite PK, many-to-many for matching against `career_paths.skills`
+- **`sync_runs`** — `id`, `source`, `status`, `inserted`, `updated`, `failed`, `error`, `finished_at` — so the Settings page can show "Last sync: 12 min ago, 247 courses"
 
-**App chrome (`AppLayout.tsx`)**
-- Sidebar header: `<MesaLogo />` + tagline "Career-driven smart timetable"
-- Active nav: lavender `secondary` background + navy text + 2px navy left bar (replaces the heavy solid-navy block)
-- Mobile top bar: small `<MesaLogo />`
+## Edge function: `sync-courses`
 
-**Auth (`Auth.tsx`)**
-- Header: `<MesaLogo />`
-- Sign-in: "Welcome back to MESA.I" / "Pick up where you left off."
-- Sign-up: "Join MESA.I" / "Let's connect your studies to your career."
+`supabase/functions/sync-courses/index.ts` does:
 
-**Onboarding (`Onboarding.tsx`)**
-- Step 1 heading: "Welcome to MESA.I"
-- Sub: "Three quick steps and we'll build your career-driven timetable."
-- Final CTA stays "Generate my plan"
+1. **TalTech**: Firecrawl `scrape` on `https://tunniplaan.taltech.ee/#/public` with `waitFor: 3000` and `formats: ['html', 'links']`. Parse the rendered course list — each entry yields `code`, `name`, `day`, `start`, `end`, `room`. For courses with multiple weekly slots we keep the first occurrence (the timetable view groups by week).
+2. **EuroTeQ**: Firecrawl `crawl` on `https://eduxchange.eu/euroteq/for-students-taltech/explore` with `limit: 200` and `includePaths: ['/euroteq/.*course.*']` to follow each course detail page. Extract title, host university, ECTS, format (online/hybrid/on-site), description.
+3. **Skill derivation**: tokenize the description against the controlled vocabulary built from `src/data/career_paths.json` (so `cv_extract` / bottle diagram / JD search keep working unchanged).
+4. **Upsert** to `courses` + `course_skills`. Log to `sync_runs`.
+5. Return `{ taltech: {inserted, updated}, euroteq: {...}, durationMs }`.
 
-**Dashboard (`Dashboard.tsx`)**
-- Page H1: "Your week, your way"
-- Sub: "Everything MESA.I is tracking for you right now."
-- Keep the existing **Program progress** card; rename labels in MESA.I voice ("ECTS earned", "Required courses done").
+Triggered by:
+- Manual "Re-sync course catalog" button on `/settings` (calls `supabase.functions.invoke('sync-courses')`)
+- Optional nightly cron via `pg_cron` (deferred to phase 2)
 
-**Settings (`Settings.tsx`)**
-- H1: "Your profile" / Sub: "MESA.I uses this to tune your plan."
+## Frontend changes
 
-**Browser tab (`index.html`)**
-- `<title>`: "MESA.I — Career-driven smart timetable"
-- `<meta description>`: "MESA.I connects your TalTech & EuroTeQ studies to your career goals."
-- `<link rel="icon">` → `/mesai-favicon.png` (delete `public/favicon.ico` so it doesn't override)
-- Add Nunito to the existing Google Fonts `<link>`
+- **`src/lib/courseProvider.ts`** — replace JSON imports with a React-Query-backed loader that selects from `courses` + `course_skills`. Public API (`taltech()`, `euroteq()`, `all()`, `byCode()`, `electives()`, `clashesWith()`, `paths()`, `pathByName()`, `eventsForPath()`, `syllabusFor()`) stays identical, so `Courses.tsx`, `Career.tsx`, `Timetable.tsx`, `Dashboard.tsx` need **zero changes**.
+- **`src/pages/Courses.tsx`** — add a small loading skeleton + an empty-state ("No courses synced yet — go to Settings → Re-sync") for first run.
+- **`src/pages/Settings.tsx`** — new "Course catalog" card showing last sync timestamp, total courses per source, and a "Re-sync now" button (with toast feedback).
+- **JSON files** — keep `src/data/taltech_courses.json` and `src/data/euroteq_courses.json` as a one-time seed for the first sync (so the app isn't empty between connecting Firecrawl and finishing the first scrape). Deletable later.
+
+## Limitations to flag
+
+- **TalTech timetable changes weekly** — we sync the *current* week's slots and label them as the canonical class time. For multi-week schedules use the existing Moodle iCal import (already shipped on `/timetable`).
+- **EduXchange listings update mid-semester** — the nightly re-sync handles this; manual re-sync is always available.
+- **Scraper fragility** — if either site changes its DOM, the scraper breaks. We log to `sync_runs.error` and keep the last successful snapshot live so the app never goes blank.
+- **Firecrawl credits** — each full sync uses ~50–100 credits. Manual button is rate-limited to 1/hour per user.
 
 ## Files touched
 
-- **New**: `src/components/MesaLogo.tsx`, `src/assets/mesai-logo.png`, `public/mesai-favicon.png`
-- **Edited**: `src/index.css`, `src/pages/Index.tsx`, `src/components/app/AppLayout.tsx`, `src/pages/Auth.tsx`, `src/pages/Onboarding.tsx`, `src/pages/Dashboard.tsx`, `src/pages/Settings.tsx`, `index.html`
-- **Deleted**: `public/favicon.ico`
+- **New**: `supabase/functions/sync-courses/index.ts`, migrations for `courses` / `course_skills` / `sync_runs`
+- **Edited**: `src/lib/courseProvider.ts` (DB-backed, same exports), `src/pages/Settings.tsx` (sync card), `src/pages/Courses.tsx` (loading/empty states)
+- **Connector**: Firecrawl (you'll be prompted to connect on first sync)
 
-No schema, routing, edge function, or feature-logic changes — this is identity, color tokens, and copy only. Existing semantic tokens (`bg-primary`, `text-muted-foreground`, `border-border`, etc.) automatically pick up the new palette across every component, so cards, buttons, badges, the timetable grid, and the bottle diagram all rebrand without per-component edits.
+## Out of scope
 
-## Out of scope (defer)
-
-- Custom illustrated empty-states / onboarding art
-- Dark-mode rebalance
-- Animated mascot reactions
+- Per-user TalTech login (no public OAuth — keep Moodle iCal for personal schedules)
+- Estonian-language UI (we prefer English titles, fall back to Estonian)
+- Grades / transcript ingestion
+- Nightly cron (phase 2 once manual sync is proven stable)
 
