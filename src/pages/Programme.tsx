@@ -185,36 +185,36 @@ export default function Programme() {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Edenemine</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Progress</CardTitle></CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-baseline justify-between">
-            <div className="text-3xl font-display">{earned} / {targetEcts} EAP</div>
-            <div className="text-sm text-muted-foreground">{remaining} EAP puudu</div>
+            <div className="text-3xl font-display">{earned} / {targetEcts} ECTS</div>
+            <div className="text-sm text-muted-foreground">{remaining} ECTS remaining</div>
           </div>
           <div className="h-2 bg-secondary rounded-full overflow-hidden">
             <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
           </div>
           <div className="flex gap-4 text-xs text-muted-foreground pt-1">
-            <span><CheckCircle2 className="inline size-3 text-primary" /> Läbitud {totals.completed} EAP</span>
-            <span><Clock className="inline size-3" /> Pooleli {totals.in_progress} EAP</span>
-            <span><Circle className="inline size-3" /> Plaanis {totals.planned} EAP</span>
+            <span><CheckCircle2 className="inline size-3 text-primary" /> Completed {totals.completed} ECTS</span>
+            <span><Clock className="inline size-3" /> In progress {totals.in_progress} ECTS</span>
+            <span><Circle className="inline size-3" /> Planned {totals.planned} ECTS</span>
           </div>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>TalTech magistri-kataloog</CardTitle></CardHeader>
+        <CardHeader><CardTitle>TalTech master's catalog</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="text-sm text-muted-foreground">
-            Avalik ÕIS-i kataloog (<span className="font-medium text-foreground">ois2.taltech.ee</span>) — ainult magistri-tasemel ained (kood 8xxx/9xxx).
+            Public ÕIS catalog (<span className="font-medium text-foreground">ois2.taltech.ee</span>) — master's-level courses only (codes 8xxx/9xxx).
           </div>
           <div className="grid grid-cols-3 gap-4 text-sm">
-            <div><div className="text-2xl font-display">{sync?.totalCourses ?? "—"}</div><div className="text-muted-foreground">kokku</div></div>
+            <div><div className="text-2xl font-display">{sync?.totalCourses ?? "—"}</div><div className="text-muted-foreground">total</div></div>
             <div><div className="text-2xl font-display">{sync?.taltechCount ?? "—"}</div><div className="text-muted-foreground">TalTech</div></div>
             <div><div className="text-2xl font-display">{sync?.euroteqCount ?? "—"}</div><div className="text-muted-foreground">EuroTeQ</div></div>
           </div>
           <div className="text-xs text-muted-foreground">
-            {sync?.lastSyncAt ? `Viimati: ${new Date(sync.lastSyncAt).toLocaleString()} (${sync.lastSource})` : "Veel pole sünkinud."}
+            {sync?.lastSyncAt ? `Last sync: ${new Date(sync.lastSyncAt).toLocaleString()} (${sync.lastSource})` : "Not synced yet."}
           </div>
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" disabled={!!syncing} onClick={() => runBatch("it")}>
@@ -223,19 +223,19 @@ export default function Programme() {
             </Button>
             <Button size="sm" variant="secondary" disabled={!!syncing} onClick={() => runBatch("eng")}>
               <RefreshCw className={`h-3 w-3 mr-1 ${syncing === "eng" ? "animate-spin" : ""}`} />
-              Inseneriteadused (MAT/MEC/EER/EMR/EAA)
+              Engineering (MAT/MEC/EER/EMR/EAA)
             </Button>
             <Button size="sm" variant="secondary" disabled={!!syncing} onClick={() => runBatch("biz")}>
               <RefreshCw className={`h-3 w-3 mr-1 ${syncing === "biz" ? "animate-spin" : ""}`} />
-              Majandus (TMJ/YFR/EJR)
+              Business (TMJ/YFR/EJR)
             </Button>
             <Button size="sm" disabled={!!syncing} onClick={() => runBatch("all")}>
               <RefreshCw className={`h-3 w-3 mr-1 ${syncing === "all" ? "animate-spin" : ""}`} />
-              Sünki kõik MSc
+              Sync all MSc
             </Button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Täis-sünk võtab ~10–15 min ja ~500–800 Firecrawl krediiti. Batch-i kaupa sünkimine on soovitatud.
+            A full sync takes ~10–15 min and ~500–800 Firecrawl credits. Syncing one batch at a time is recommended.
           </p>
         </CardContent>
       </Card>
@@ -243,7 +243,7 @@ export default function Programme() {
       {courses.length === 0 ? (
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            Veel ühtegi ainet pole üles laetud. Mine <a className="text-primary underline" href="/settings">Settings</a> lehele ja lae oma ainekavad (RTF/PDF/DOCX).
+            No courses uploaded yet. Go to <a className="text-primary underline" href="/settings">Settings</a> and upload your syllabi (RTF/PDF/DOCX).
           </CardContent>
         </Card>
       ) : (
@@ -252,7 +252,7 @@ export default function Programme() {
           if (list.length === 0) return null;
           return (
             <div key={g.key} className="space-y-2">
-              <h2 className="font-display text-xl">{g.title} <span className="text-sm text-muted-foreground font-sans">· {list.length} ainet</span></h2>
+              <h2 className="font-display text-xl">{g.title} <span className="text-sm text-muted-foreground font-sans">· {list.length} courses</span></h2>
               <div className="grid gap-2">
                 {list.map((c) => (
                   <Card key={c.id} className={g.tone}>
@@ -260,7 +260,7 @@ export default function Programme() {
                       <div className="flex-1 min-w-0">
                         <div className="font-medium truncate">{c.code} · {c.name}</div>
                         <div className="text-xs text-muted-foreground flex flex-wrap gap-2 mt-0.5">
-                          {c.ects != null && <span>{c.ects} EAP</span>}
+                          {c.ects != null && <span>{c.ects} ECTS</span>}
                           {c.semester && <span>{c.semester}</span>}
                           {c.assessment && <span>{c.assessment}</span>}
                           {(c.skills ?? []).slice(0, 4).map((s) => (
@@ -276,10 +276,10 @@ export default function Programme() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <Button size="sm" variant="outline" onClick={() => addToCalendar(c)} title="Lisa kalendrisse">
+                      <Button size="sm" variant="outline" onClick={() => addToCalendar(c)} title="Add to calendar">
                         <CalendarIcon className="size-4" />
                       </Button>
-                      <Button size="sm" variant="ghost" onClick={() => remove(c.id)} title="Kustuta">
+                      <Button size="sm" variant="ghost" onClick={() => remove(c.id)} title="Delete">
                         <Trash2 className="size-4" />
                       </Button>
                     </CardContent>
