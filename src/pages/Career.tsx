@@ -64,7 +64,7 @@ export default function Career() {
         user_id: user.id, ranked: r, selected_path: r[0]?.name ?? null, reasoning: r[0]?.reasoning ?? null,
       });
       setSelected(r[0]?.name ?? null);
-      toast({ title: "Analysis complete", description: "We ranked the best career paths for you." });
+      toast({ title: "Analysis complete", description: "Here are the best career paths for you, ranked." });
     } catch (e: any) {
       const msg = e.message || "Something went wrong";
       if (msg.includes("429")) toast({ title: "Rate limited", description: "Try again in a moment.", variant: "destructive" });
