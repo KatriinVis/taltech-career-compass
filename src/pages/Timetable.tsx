@@ -12,6 +12,7 @@ import { parseICS } from "@/lib/ical";
 import { Trash2, Plus, BookOpen, CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
 import { courseProvider } from "@/lib/courseProvider";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const HOURS = Array.from({ length: 11 }, (_, i) => 8 + i);
@@ -105,6 +106,16 @@ export default function Timetable() {
   const remove = async (id: string) => {
     await supabase.from("schedule_events").delete().eq("id", id);
     load();
+  };
+
+  const toggleDone = async (id: string, done: boolean) => {
+    const completed_at = done ? new Date().toISOString() : null;
+    setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, completed_at } : e)));
+    const { error } = await supabase.from("schedule_events").update({ completed_at }).eq("id", id);
+    if (error) {
+      toast({ title: "Could not update", description: error.message, variant: "destructive" });
+      load();
+    }
   };
 
   const addAssignment = async (courseCode: string, courseTitle: string, a: { title: string; due: string; weight: number }) => {
@@ -228,13 +239,20 @@ export default function Timetable() {
                 <div className="flex flex-col gap-2">
                   {weekItems.map((e) => {
                     const obj = objectivesLine(e.course_code);
+                    const done = !!e.completed_at;
                     return (
                       <div key={e.id} className="flex items-start justify-between rounded-md border p-2 text-sm">
                         <div className="flex items-start gap-2 min-w-0">
+                          <Checkbox
+                            className="mt-1"
+                            checked={done}
+                            onCheckedChange={(v) => toggleDone(e.id, !!v)}
+                            aria-label="Mark done"
+                          />
                           <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${kindColor[e.kind] || "bg-secondary"}`}>{e.kind}</span>
                           <div className="min-w-0">
-                            <div className="font-medium truncate">{e.title}</div>
-                            <div className="text-xs text-muted-foreground">
+                            <div className={`font-medium truncate ${done ? "line-through text-muted-foreground" : ""}`}>{e.title}</div>
+                            <div className={`text-xs text-muted-foreground ${done ? "line-through" : ""}`}>
                               {new Date(e.starts_at).toLocaleString()} · {sourceLabel[e.source] ?? e.source ?? "Manual"}
                             </div>
                             {obj && <div className="text-xs text-muted-foreground mt-0.5">Objectives: {obj}</div>}
@@ -279,7 +297,7 @@ export default function Timetable() {
                               </div>
                             )}
                             {ones.map((o) => (
-                              <div key={o.id} className={`rounded-md p-1.5 text-xs leading-tight ${kindColor[o.kind] || "bg-secondary"}`}>
+                              <div key={o.id} className={`rounded-md p-1.5 text-xs leading-tight ${kindColor[o.kind] || "bg-secondary"} ${o.completed_at ? "opacity-50 line-through" : ""}`}>
                                 <div className="font-medium truncate">{o.title}</div>
                                 <div className="opacity-80 text-[10px]">{new Date(o.starts_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
                               </div>
@@ -334,7 +352,7 @@ export default function Timetable() {
                       <div className={`text-xs font-medium ${isToday ? "text-primary" : ""}`}>{date.getDate()}</div>
                       <div className="space-y-0.5">
                         {visible.map((it: any, i) => (
-                          <div key={i} className={`rounded px-1 py-0.5 text-[10px] truncate ${kindColor[it.kind] || "bg-secondary"}`}>
+                          <div key={i} className={`rounded px-1 py-0.5 text-[10px] truncate ${kindColor[it.kind] || "bg-secondary"} ${it.completed_at ? "opacity-50 line-through" : ""}`}>
                             {it._isRecurring ? (it.course_code ?? it.title) : it.title}
                           </div>
                         ))}
@@ -366,17 +384,28 @@ export default function Timetable() {
             )}
             {dayDetailItems.map((it: any, i) => {
               const syl = it.course_code ? courseProvider.syllabusFor(it.course_code) : undefined;
+              const done = !!it.completed_at;
               return (
                 <div key={i} className="rounded-md border p-3 space-y-2">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
+                    <div className="flex items-start gap-2 min-w-0">
+                      {!it._isRecurring && (
+                        <Checkbox
+                          className="mt-1"
+                          checked={done}
+                          onCheckedChange={(v) => toggleDone(it.id, !!v)}
+                          aria-label="Mark done"
+                        />
+                      )}
+                      <div className="min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${kindColor[it.kind] || "bg-secondary"}`}>{it.kind}</span>
                         {it.source && <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary">{sourceLabel[it.source] ?? it.source}</span>}
                       </div>
-                      <div className="font-medium text-sm">{it.title}</div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className={`font-medium text-sm ${done ? "line-through text-muted-foreground" : ""}`}>{it.title}</div>
+                      <div className={`text-xs text-muted-foreground ${done ? "line-through" : ""}`}>
                         {it._isRecurring ? `${it.start_time}–${it.end_time} (weekly)` : new Date(it.starts_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </div>
                       </div>
                     </div>
                     {!it._isRecurring && (
@@ -521,20 +550,28 @@ export default function Timetable() {
         <Card>
           <CardHeader><CardTitle>All upcoming items</CardTitle></CardHeader>
           <CardContent className="space-y-2">
-            {oneoffs.map((e) => (
+            {oneoffs.map((e) => {
+              const done = !!e.completed_at;
+              return (
               <div key={e.id} className="flex items-center justify-between rounded-md border p-2 text-sm">
                 <div className="flex items-center gap-2 min-w-0">
+                  <Checkbox
+                    checked={done}
+                    onCheckedChange={(v) => toggleDone(e.id, !!v)}
+                    aria-label="Mark done"
+                  />
                   <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${kindColor[e.kind] || "bg-secondary"}`}>{e.kind}</span>
                   <div className="min-w-0">
-                    <div className="font-medium truncate">{e.title}</div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className={`font-medium truncate ${done ? "line-through text-muted-foreground" : ""}`}>{e.title}</div>
+                    <div className={`text-xs text-muted-foreground ${done ? "line-through" : ""}`}>
                       {new Date(e.starts_at).toLocaleString()} · {sourceLabel[e.source] ?? e.source ?? "Manual"}
                     </div>
                   </div>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => remove(e.id)}><Trash2 className="size-4" /></Button>
               </div>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
       )}

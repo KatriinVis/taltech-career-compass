@@ -237,6 +237,7 @@ export type Database = {
       }
       schedule_events: {
         Row: {
+          completed_at: string | null
           course_code: string | null
           created_at: string
           day_of_week: number | null
@@ -251,6 +252,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          completed_at?: string | null
           course_code?: string | null
           created_at?: string
           day_of_week?: number | null
@@ -265,6 +267,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          completed_at?: string | null
           course_code?: string | null
           created_at?: string
           day_of_week?: number | null
