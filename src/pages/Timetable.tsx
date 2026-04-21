@@ -352,7 +352,7 @@ export default function Timetable() {
                       <div className={`text-xs font-medium ${isToday ? "text-primary" : ""}`}>{date.getDate()}</div>
                       <div className="space-y-0.5">
                         {visible.map((it: any, i) => (
-                          <div key={i} className={`rounded px-1 py-0.5 text-[10px] truncate ${kindColor[it.kind] || "bg-secondary"}`}>
+                          <div key={i} className={`rounded px-1 py-0.5 text-[10px] truncate ${kindColor[it.kind] || "bg-secondary"} ${it.completed_at ? "opacity-50 line-through" : ""}`}>
                             {it._isRecurring ? (it.course_code ?? it.title) : it.title}
                           </div>
                         ))}
