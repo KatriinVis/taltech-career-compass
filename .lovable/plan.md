@@ -1,92 +1,75 @@
 
 
-# Connect MESA.I to live TalTech & EuroTeQ course data
+# Iga kasutaja oma õppekava — RTF/PDF üleslaadija
 
-Replace the static JSON catalogs with real data scraped from the two sources you specified, stored in Lovable Cloud, and refreshed on demand.
+Igal kasutajal on erinev õppekava (TATM, IVCM, IAIB, bakalaureus jne), seega ei saa staatilist faili kasutada. Selle asemel laeb iga kasutaja **oma ainekavad ükshaaval** üles (RTF, PDF, DOCX) — nagu sa just praegu tegid TMJ0140-ga — ja MESA.I parsib need automaatselt sinu isiklikku õppekavasse.
 
-## Sources
+## Mida ehitame
 
-- **TalTech** — `https://tunniplaan.taltech.ee/#/public` (public timetable). Unlike ÕIS, this one exposes real **scheduled slots** (day, start, end, room), which is exactly what powers the timetable + clash detection.
-- **EuroTeQ** — `https://eduxchange.eu/euroteq/for-students-taltech/explore` (official EduXchange portal for TalTech students). Provides title, host university, ECTS, format, and description.
+### 1. Ainekava üleslaadija (Settings → "Minu õppekava")
 
-## Architecture
+Uus kaart `/settings` lehel:
+- **Drag-and-drop ala**: lohista 1+ ainekava faili korraga (`.rtf`, `.pdf`, `.docx`, `.txt`)
+- Iga fail → parsitakse → näidatakse eelvaade (kood, nimi, EAP, semester, eeldusained, õpiväljundid)
+- Sina märgid: **Läbitud** ✓ / **Pooleli** / **Plaanis**
+- "Salvesta" → kõik aineid salvestakse `user_courses` tabelisse
 
-```text
-[ tunniplaan.taltech.ee ]      [ eduxchange.eu/euroteq ]
-            \                          /
-             \                        /
-        ┌─────────────────────────────┐
-        │  edge fn: sync-courses      │  ← Firecrawl (JS-rendered scrape)
-        │  - parses both sources      │
-        │  - normalises to Course     │
-        │  - upserts to DB            │
-        └─────────────┬───────────────┘
-                      │
-              ┌───────▼────────┐
-              │ courses (DB)   │  ← public read, service-role write
-              │ course_skills  │
-              └───────┬────────┘
-                      │
-        ┌─────────────▼──────────────┐
-        │ src/lib/courseProvider.ts  │  ← same API: taltech(), euroteq(),
-        │   (DB-backed, React Query) │     electives(), byCode(), clashesWith()
-        └─────────────┬──────────────┘
-                      │
-   Courses · Career · Timetable · Dashboard (no changes)
+### 2. RTF parsimine (uus, kuna `cvExtract.ts` seda ei toeta)
+
+Lisame `extractTextFromFile()` funktsioonile RTF-toe — lihtne regex tõmbab `\'XX` hex-escape'd ja `{...}` kontrollpäised välja, jättes alles puhta teksti. Töötab ka eesti-tähtedega (`\'F5` = õ, `\'E4` = ä jne).
+
+### 3. Ainekava-spetsiifiline parser (uus edge function `parse-syllabus`)
+
+Sarnaselt `analyze-cv`-le, aga TalTech ainekava jaoks. Azure OpenAI tool-call tagastab struktureeritult:
+
+```json
+{
+  "code": "TMJ0140",
+  "name_et": "Ettevõtluse alused",
+  "name_en": "Introduction to Entrepreneurship",
+  "ects": 6.0,
+  "semester": "sügis-kevad",
+  "assessment": "eksam",
+  "language": ["eesti", "inglise"],
+  "prerequisites": [],
+  "learning_outcomes": ["kirjeldab ettevõtluse põhimõisteid...", ...],
+  "topics": ["ettevõtluskultuur", "ärimudel", ...],
+  "workload": { "lectures": 1.0, "practicals": 0.0, "seminars": 3.0 },
+  "skills": ["entrepreneurship", "business-modeling", "team-work"]
+}
 ```
 
-## Why we need Firecrawl
+Skills tuletatakse õpiväljunditest sama kontrollvoarakuga, mida `sync-courses` juba kasutab — nii et parsitud aine sobitub sinu karjääriraja soovituste / pudeli-diagrammiga ühtmoodi.
 
-Both URLs are **JavaScript-rendered single-page apps** (`tunniplaan.taltech.ee` is a hash-routed Vue app; EduXchange is a React app). A plain `fetch` returns an empty HTML shell. We need a JS-capable scraper. Firecrawl is the cleanest fit, available as a Lovable connector, and we already have the integration pattern.
+### 4. Sinu isiklik õppekava-vaade (`/programme`)
 
-You'll be prompted to connect Firecrawl on first sync. No API key from you — the connector handles it.
+Uus leht, mis näitab sinu üles laetud aineid:
+- **Läbitud** (rohelised märkega) — kogu EAP summa
+- **Pooleli** (kollased) — selle semestri aktiivsed
+- **Plaanis** (hallid) — tulevased
 
-## Database
+EAP edenemisriba ja "X EAP puudu lõpetamiseni" arvutus (sa sisestad sihtmärgi: nt 120 EAP magistri jaoks).
 
-New tables (RLS: public read, service-role write):
+### 5. Kalendrisse lisamine
 
-- **`courses`** — `code` (PK), `name`, `ects`, `semester`, `required`, `day`, `start`, `end`, `room`, `format`, `university`, `source` (`'taltech'` | `'euroteq'`), `description`, `url`, `last_synced_at`
-- **`course_skills`** — `(course_code, skill)` composite PK, many-to-many for matching against `career_paths.skills`
-- **`sync_runs`** — `id`, `source`, `status`, `inserted`, `updated`, `failed`, `error`, `finished_at` — so the Settings page can show "Last sync: 12 min ago, 247 courses"
+Iga aine kõrval nupp **"Lisa kalendrisse"** → see loob `schedule_events` kirje (kasutab juba olemasolevat süllabuse-→-kalendri loogikat, mis on `Timetable.tsx`-s). Lõputöö verstapostid (kui sa märgid aine `kind: "thesis"`) genereeritakse automaatselt sinu sisestatud kaitsmiskuupäeva järgi — teema, mustand, eelkaitsmine, esitamine.
 
-## Edge function: `sync-courses`
+## Andmebaas
 
-`supabase/functions/sync-courses/index.ts` does:
+Üks uus tabel (RLS: ainult kasutaja ise):
 
-1. **TalTech**: Firecrawl `scrape` on `https://tunniplaan.taltech.ee/#/public` with `waitFor: 3000` and `formats: ['html', 'links']`. Parse the rendered course list — each entry yields `code`, `name`, `day`, `start`, `end`, `room`. For courses with multiple weekly slots we keep the first occurrence (the timetable view groups by week).
-2. **EuroTeQ**: Firecrawl `crawl` on `https://eduxchange.eu/euroteq/for-students-taltech/explore` with `limit: 200` and `includePaths: ['/euroteq/.*course.*']` to follow each course detail page. Extract title, host university, ECTS, format (online/hybrid/on-site), description.
-3. **Skill derivation**: tokenize the description against the controlled vocabulary built from `src/data/career_paths.json` (so `cv_extract` / bottle diagram / JD search keep working unchanged).
-4. **Upsert** to `courses` + `course_skills`. Log to `sync_runs`.
-5. Return `{ taltech: {inserted, updated}, euroteq: {...}, durationMs }`.
+- **`user_courses`** — `id`, `user_id`, `code`, `name`, `ects`, `semester`, `status` (`completed` | `in_progress` | `planned`), `assessment`, `learning_outcomes` (text[]), `topics` (text[]), `skills` (text[]), `prerequisites` (text[]), `workload` (jsonb), `raw_text`, `source_filename`, `created_at`
 
-Triggered by:
-- Manual "Re-sync course catalog" button on `/settings` (calls `supabase.functions.invoke('sync-courses')`)
-- Optional nightly cron via `pg_cron` (deferred to phase 2)
+Pluss `profiles`-le lisame: `programme_code` (nt "TATM"), `programme_name`, `target_ects` (nt 120), `target_graduation` (date).
 
-## Frontend changes
+## Failid mida muudame
 
-- **`src/lib/courseProvider.ts`** — replace JSON imports with a React-Query-backed loader that selects from `courses` + `course_skills`. Public API (`taltech()`, `euroteq()`, `all()`, `byCode()`, `electives()`, `clashesWith()`, `paths()`, `pathByName()`, `eventsForPath()`, `syllabusFor()`) stays identical, so `Courses.tsx`, `Career.tsx`, `Timetable.tsx`, `Dashboard.tsx` need **zero changes**.
-- **`src/pages/Courses.tsx`** — add a small loading skeleton + an empty-state ("No courses synced yet — go to Settings → Re-sync") for first run.
-- **`src/pages/Settings.tsx`** — new "Course catalog" card showing last sync timestamp, total courses per source, and a "Re-sync now" button (with toast feedback).
-- **JSON files** — keep `src/data/taltech_courses.json` and `src/data/euroteq_courses.json` as a one-time seed for the first sync (so the app isn't empty between connecting Firecrawl and finishing the first scrape). Deletable later.
+- **Uus**: `src/pages/Programme.tsx` (sinu õppekava-vaade), `supabase/functions/parse-syllabus/index.ts`, migratsioon `user_courses` tabeli + `profiles` lisaväljade jaoks
+- **Muudame**: `src/lib/cvExtract.ts` (lisame RTF-toe), `src/pages/Settings.tsx` (lisame ainekava-üleslaadija kaardi), `src/components/app/AppLayout.tsx` (lisame "Õppekava" nav-lingi), `src/pages/Dashboard.tsx` (asendame "Program progress" reaalsete andmetega `user_courses`-st)
 
-## Limitations to flag
+## Mis ei ole skoobis
 
-- **TalTech timetable changes weekly** — we sync the *current* week's slots and label them as the canonical class time. For multi-week schedules use the existing Moodle iCal import (already shipped on `/timetable`).
-- **EduXchange listings update mid-semester** — the nightly re-sync handles this; manual re-sync is always available.
-- **Scraper fragility** — if either site changes its DOM, the scraper breaks. We log to `sync_runs.error` and keep the last successful snapshot live so the app never goes blank.
-- **Firecrawl credits** — each full sync uses ~50–100 credits. Manual button is rate-limited to 1/hour per user.
-
-## Files touched
-
-- **New**: `supabase/functions/sync-courses/index.ts`, migrations for `courses` / `course_skills` / `sync_runs`
-- **Edited**: `src/lib/courseProvider.ts` (DB-backed, same exports), `src/pages/Settings.tsx` (sync card), `src/pages/Courses.tsx` (loading/empty states)
-- **Connector**: Firecrawl (you'll be prompted to connect on first sync)
-
-## Out of scope
-
-- Per-user TalTech login (no public OAuth — keep Moodle iCal for personal schedules)
-- Estonian-language UI (we prefer English titles, fall back to Estonian)
-- Grades / transcript ingestion
-- Nightly cron (phase 2 once manual sync is proven stable)
+- ÕISist automaatne tõmbamine (vajab VPN-i ja kasutaja-autentimist)
+- Hinnete sünk
+- Mitme kasutaja õppekavade jagamine
 
