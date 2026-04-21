@@ -287,35 +287,48 @@ Deno.serve(async (req) => {
 
   const result: Record<string, unknown> = {};
 
-  // TalTech
-  try {
-    const tt = await firecrawlScrape("https://tunniplaan.taltech.ee/#/public");
-    const courses = parseTalTech(tt.markdown || tt.data?.markdown || "");
-    const r = await upsertCourses(supabase, courses, "taltech");
-    await supabase.from("sync_runs").insert({ source: "taltech", status: "ok", inserted: r.inserted, failed: r.failed });
-    result.taltech = r;
-  } catch (e: any) {
-    await supabase.from("sync_runs").insert({ source: "taltech", status: "error", error: String(e.message || e) });
-    result.taltech = { error: String(e.message || e) };
+  let body: any = {};
+  try { body = await req.json(); } catch { /* GET or empty */ }
+  const scope: string = body?.scope ?? "all";
+  const batch: string | undefined = body?.batch; // 'it' | 'eng' | 'biz'
+  const customPrefix: string | undefined = body?.prefix;
+
+  // TalTech MSc — prefix-based
+  if (scope === "taltech-msc" || scope === "all") {
+    let prefixes: string[] = ALL_MSC_PREFIXES;
+    if (customPrefix) prefixes = [customPrefix];
+    else if (batch && MSC_BATCHES[batch]) prefixes = MSC_BATCHES[batch];
+
+    const perPrefix: any[] = [];
+    for (const p of prefixes) {
+      const r = await syncMscPrefix(supabase, p);
+      perPrefix.push(r);
+    }
+    result.taltech_msc = {
+      totalInserted: perPrefix.reduce((a, r) => a + (r.inserted ?? 0), 0),
+      perPrefix,
+    };
   }
 
-  // EuroTeQ
-  try {
-    const eq = await firecrawlCrawl("https://eduxchange.eu/euroteq/for-students-taltech/explore", {
-      limit: 60,
-      includePaths: [".*course.*", ".*offering.*"],
-    });
-    const pages = (eq.data || []).map((d: any) => ({
-      url: d.metadata?.sourceURL || d.metadata?.url || "",
-      markdown: d.markdown || "",
-    }));
-    const courses = parseEuroTeQ(pages);
-    const r = await upsertCourses(supabase, courses, "euroteq");
-    await supabase.from("sync_runs").insert({ source: "euroteq", status: "ok", inserted: r.inserted, failed: r.failed });
-    result.euroteq = r;
-  } catch (e: any) {
-    await supabase.from("sync_runs").insert({ source: "euroteq", status: "error", error: String(e.message || e) });
-    result.euroteq = { error: String(e.message || e) };
+  // EuroTeQ (jätame alles, käivitub ainult scope=euroteq või scope=all)
+  if (scope === "euroteq" || scope === "all") {
+    try {
+      const eq = await firecrawlCrawl("https://eduxchange.eu/euroteq/for-students-taltech/explore", {
+        limit: 60,
+        includePaths: [".*course.*", ".*offering.*"],
+      });
+      const pages = (eq.data || []).map((d: any) => ({
+        url: d.metadata?.sourceURL || d.metadata?.url || "",
+        markdown: d.markdown || "",
+      }));
+      const courses = parseEuroTeQ(pages);
+      const r = await upsertCourses(supabase, courses, "euroteq");
+      await supabase.from("sync_runs").insert({ source: "euroteq", status: "ok", inserted: r.inserted, failed: r.failed });
+      result.euroteq = r;
+    } catch (e: any) {
+      await supabase.from("sync_runs").insert({ source: "euroteq", status: "error", error: String(e.message || e) });
+      result.euroteq = { error: String(e.message || e) };
+    }
   }
 
   result.durationMs = Date.now() - started;
