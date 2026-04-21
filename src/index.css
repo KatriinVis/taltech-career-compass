@@ -2,50 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* MESA.I design system. All colors HSL. */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap');
 
 @layer base {
   :root {
-    --background: 210 30% 98%;
-    --foreground: 220 45% 12%;
+    --background: 0 0% 100%;
+    --foreground: 224 60% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 45% 12%;
+    --card-foreground: 224 60% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 45% 12%;
+    --popover-foreground: 224 60% 15%;
 
-    --primary: 220 70% 22%;
+    --primary: 224 60% 15%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 188 90% 45%;
+    --primary-glow: 250 50% 78%;
 
-    --secondary: 210 30% 94%;
-    --secondary-foreground: 220 45% 12%;
+    --secondary: 250 45% 96%;
+    --secondary-foreground: 224 60% 15%;
 
-    --muted: 210 30% 94%;
-    --muted-foreground: 220 15% 45%;
+    --muted: 250 30% 97%;
+    --muted-foreground: 224 20% 45%;
 
-    --accent: 188 90% 45%;
-    --accent-foreground: 220 45% 12%;
+    --accent: 32 55% 58%;
+    --accent-foreground: 224 60% 15%;
 
-    --success: 152 60% 40%;
-    --warning: 38 95% 55%;
-    --destructive: 0 75% 55%;
+    --success: 145 50% 50%;
+    --warning: 38 92% 58%;
+    --destructive: 0 75% 58%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 20% 88%;
-    --input: 220 20% 88%;
-    --ring: 220 70% 22%;
+    --border: 250 30% 90%;
+    --input: 250 30% 90%;
+    --ring: 224 60% 15%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(220 70% 22%), hsl(188 90% 45%));
-    --gradient-soft: linear-gradient(180deg, hsl(210 30% 98%), hsl(210 40% 95%));
-    --shadow-elegant: 0 10px 30px -10px hsl(220 70% 22% / 0.18);
-    --shadow-card: 0 1px 3px hsl(220 45% 12% / 0.06), 0 1px 2px hsl(220 45% 12% / 0.04);
+    --gradient-primary: linear-gradient(135deg, hsl(224 60% 15%), hsl(250 50% 70%));
+    --gradient-soft: linear-gradient(180deg, hsl(0 0% 100%), hsl(250 45% 97%));
+    --shadow-elegant: 0 10px 30px -10px hsl(224 60% 15% / 0.20);
+    --shadow-card: 0 1px 3px hsl(224 60% 15% / 0.06), 0 4px 12px hsl(250 50% 70% / 0.10);
     --transition-smooth: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -112,5 +111,11 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     font-feature-settings: 'cv11', 'ss01';
+  }
+
+  .font-display {
+    font-family: 'Nunito', 'Inter', system-ui, sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.01em;
   }
 }
