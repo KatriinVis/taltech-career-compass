@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { Sparkles } from "lucide-react";
+import MesaLogo from "@/components/MesaLogo";
 
 const INTERESTS = [
   "AI / ML", "Data Science", "Cybersecurity", "Robotics", "Cloud / DevOps",
@@ -112,11 +112,10 @@ export default function Onboarding() {
   return (
     <div className="min-h-screen bg-background grid place-items-center p-6">
       <div className="w-full max-w-xl rounded-xl border bg-card p-8" style={{ boxShadow: "var(--shadow-elegant)" }}>
-        <div className="flex items-center gap-2 mb-6">
-          <div className="size-9 rounded-lg flex items-center justify-center text-primary-foreground" style={{ background: "var(--gradient-primary)" }}>
-            <Sparkles className="size-5" />
-          </div>
-          <div className="font-semibold">Welcome — let's set you up</div>
+        <div className="mb-6">
+          <MesaLogo size="md" />
+          <h1 className="font-display text-xl mt-3">Welcome to MESA.I</h1>
+          <p className="text-sm text-muted-foreground">Three quick steps and we'll build your career-driven timetable.</p>
         </div>
         <div className="flex gap-2 mb-6">
           {[1, 2, 3, 4].map((s) => (

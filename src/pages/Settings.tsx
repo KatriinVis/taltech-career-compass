@@ -38,8 +38,8 @@ export default function Settings() {
   return (
     <div className="space-y-6 max-w-xl">
       <div>
-        <h1 className="text-3xl font-bold">Settings</h1>
-        <p className="text-muted-foreground">Manage your profile.</p>
+        <h1 className="font-display text-3xl">Your profile</h1>
+        <p className="text-muted-foreground">MESA.I uses this to tune your plan.</p>
       </div>
       <Card>
         <CardHeader><CardTitle>Profile</CardTitle></CardHeader>

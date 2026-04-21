@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { z } from "zod";
-import { Sparkles } from "lucide-react";
+import MesaLogo from "@/components/MesaLogo";
 
 const schema = z.object({
   email: z.string().email("Invalid email").max(255),
@@ -58,15 +58,12 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen grid place-items-center bg-background p-6">
       <div className="w-full max-w-md rounded-xl border bg-card p-8" style={{ boxShadow: "var(--shadow-elegant)" }}>
-        <Link to="/" className="flex items-center gap-2 mb-6">
-          <div className="size-9 rounded-lg flex items-center justify-center text-primary-foreground" style={{ background: "var(--gradient-primary)" }}>
-            <Sparkles className="size-5" />
-          </div>
-          <span className="font-semibold">Career Driver</span>
+        <Link to="/" className="inline-flex mb-6">
+          <MesaLogo size="md" />
         </Link>
-        <h1 className="text-2xl font-bold mb-1">{mode === "signup" ? "Create your account" : "Welcome back"}</h1>
+        <h1 className="font-display text-2xl mb-1">{mode === "signup" ? "Join MESA.I" : "Welcome back to MESA.I"}</h1>
         <p className="text-sm text-muted-foreground mb-6">
-          {mode === "signup" ? "Start aligning your studies with your career." : "Sign in to continue."}
+          {mode === "signup" ? "Let's connect your studies to your career." : "Pick up where you left off."}
         </p>
         <form onSubmit={submit} className="space-y-4">
           <div>
