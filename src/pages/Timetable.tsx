@@ -384,17 +384,28 @@ export default function Timetable() {
             )}
             {dayDetailItems.map((it: any, i) => {
               const syl = it.course_code ? courseProvider.syllabusFor(it.course_code) : undefined;
+              const done = !!it.completed_at;
               return (
                 <div key={i} className="rounded-md border p-3 space-y-2">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
+                    <div className="flex items-start gap-2 min-w-0">
+                      {!it._isRecurring && (
+                        <Checkbox
+                          className="mt-1"
+                          checked={done}
+                          onCheckedChange={(v) => toggleDone(it.id, !!v)}
+                          aria-label="Mark done"
+                        />
+                      )}
+                      <div className="min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${kindColor[it.kind] || "bg-secondary"}`}>{it.kind}</span>
                         {it.source && <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary">{sourceLabel[it.source] ?? it.source}</span>}
                       </div>
-                      <div className="font-medium text-sm">{it.title}</div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className={`font-medium text-sm ${done ? "line-through text-muted-foreground" : ""}`}>{it.title}</div>
+                      <div className={`text-xs text-muted-foreground ${done ? "line-through" : ""}`}>
                         {it._isRecurring ? `${it.start_time}–${it.end_time} (weekly)` : new Date(it.starts_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </div>
                       </div>
                     </div>
                     {!it._isRecurring && (
