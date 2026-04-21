@@ -110,10 +110,10 @@ export default function Programme() {
       // Generate thesis milestones
       const grad = new Date(targetGrad);
       const milestones = [
-        { title: `${c.name}: teema kinnitamine`, offset: -120 },
-        { title: `${c.name}: esimene mustand`, offset: -60 },
-        { title: `${c.name}: eelkaitsmine`, offset: -21 },
-        { title: `${c.name}: kaitsmine`, offset: 0 },
+        { title: `${c.name}: topic confirmation`, offset: -120 },
+        { title: `${c.name}: first draft`, offset: -60 },
+        { title: `${c.name}: pre-defense`, offset: -21 },
+        { title: `${c.name}: defense`, offset: 0 },
       ];
       const rows = milestones.map((m) => {
         const d = new Date(grad);
@@ -129,8 +129,8 @@ export default function Programme() {
         };
       });
       const { error } = await supabase.from("schedule_events").insert(rows);
-      if (error) return toast({ title: "Viga", description: error.message, variant: "destructive" });
-      toast({ title: "Lõputöö verstapostid lisatud", description: `${rows.length} kirjet kalendrisse` });
+      if (error) return toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "Thesis milestones added", description: `${rows.length} entries on your calendar` });
     } else {
       const { error } = await supabase.from("schedule_events").insert({
         user_id: user.id,
@@ -139,8 +139,8 @@ export default function Programme() {
         course_code: c.code,
         source: "programme",
       });
-      if (error) return toast({ title: "Viga", description: error.message, variant: "destructive" });
-      toast({ title: "Lisatud kalendrisse" });
+      if (error) return toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "Added to calendar" });
     }
   };
 
