@@ -12,6 +12,7 @@ import { parseICS } from "@/lib/ical";
 import { Trash2, Plus, BookOpen, CalendarPlus, ChevronLeft, ChevronRight } from "lucide-react";
 import { courseProvider } from "@/lib/courseProvider";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 const HOURS = Array.from({ length: 11 }, (_, i) => 8 + i);
@@ -105,6 +106,16 @@ export default function Timetable() {
   const remove = async (id: string) => {
     await supabase.from("schedule_events").delete().eq("id", id);
     load();
+  };
+
+  const toggleDone = async (id: string, done: boolean) => {
+    const completed_at = done ? new Date().toISOString() : null;
+    setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, completed_at } : e)));
+    const { error } = await supabase.from("schedule_events").update({ completed_at }).eq("id", id);
+    if (error) {
+      toast({ title: "Could not update", description: error.message, variant: "destructive" });
+      load();
+    }
   };
 
   const addAssignment = async (courseCode: string, courseTitle: string, a: { title: string; due: string; weight: number }) => {
