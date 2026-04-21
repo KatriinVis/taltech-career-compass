@@ -57,6 +57,9 @@ export type CatalogCourse = {
   semester: string | null;
   source: string;
   language: string[] | null;
+  day: number | null;
+  start: string | null;
+  end: string | null;
 };
 
 export async function searchCatalog(opts: {
@@ -71,7 +74,7 @@ export async function searchCatalog(opts: {
   const pageSize = opts.pageSize ?? 50;
   let q = supabase
     .from("courses")
-    .select("code,name,name_en,ects,faculty,level,semester,source,language", { count: "exact" });
+    .select("code,name,name_en,ects,faculty,level,semester,source,language,day,start,end", { count: "exact" });
   if (opts.query?.trim()) {
     const s = opts.query.trim().replace(/[%]/g, "");
     q = q.or(`code.ilike.%${s}%,name.ilike.%${s}%,name_en.ilike.%${s}%`);

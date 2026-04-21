@@ -10,8 +10,53 @@ import { toast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sparkles, Plus, AlertTriangle, Check, Globe, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { checkFit, type FitResult } from "@/lib/scheduleFit";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const DAY_NAMES = ["", "Mon", "Tue", "Wed", "Thu", "Fri"];
+
+function FitBadge({ fit }: { fit: FitResult }) {
+  if (fit.status === "unknown") {
+    return (
+      <Badge variant="secondary" className="text-[10px] font-normal">
+        <Globe className="size-3 mr-1" /> Time TBD
+      </Badge>
+    );
+  }
+  if (fit.status === "fits") {
+    return (
+      <Badge className="text-[10px] font-normal bg-success/15 text-success hover:bg-success/15 border-transparent">
+        <Check className="size-3 mr-1" /> Fits your schedule
+      </Badge>
+    );
+  }
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge className="text-[10px] font-normal bg-destructive/15 text-destructive hover:bg-destructive/15 border-transparent cursor-help">
+            <AlertTriangle className="size-3 mr-1" /> Conflicts with {fit.with[0]}{fit.with.length > 1 ? ` +${fit.with.length - 1}` : ""}
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent>
+          Conflicts with: {fit.with.slice(0, 3).join(", ")}{fit.with.length > 3 ? "…" : ""}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
 
 export default function Courses() {
   const { user } = useAuth();
@@ -31,6 +76,8 @@ export default function Courses() {
   const [catLoading, setCatLoading] = useState(false);
   const [faculties, setFaculties] = useState<string[]>([]);
   const PAGE_SIZE = 50;
+  const [hideConflicts, setHideConflicts] = useState(false);
+  const [pendingConflict, setPendingConflict] = useState<{ course: CatalogCourse; titles: string[] } | null>(null);
   useEffect(() => {
     courseProvider.loadCourses().then(() => forceTick((n) => n + 1));
     return subscribeCourses(() => forceTick((n) => n + 1));
@@ -72,6 +119,15 @@ export default function Courses() {
     });
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Added to programme", description: `${c.code} · ${c.name}` });
+  };
+
+  const handleAddCatalog = (c: CatalogCourse) => {
+    const fit = checkFit(c, events as any);
+    if (fit.status === "conflicts") {
+      setPendingConflict({ course: c, titles: fit.with });
+      return;
+    }
+    addToCurriculum(c);
   };
 
   const load = async () => {
@@ -295,18 +351,26 @@ export default function Courses() {
             )}
           </div>
           <div className="text-xs text-muted-foreground">{catTotal} courses found · page {catPage + 1}/{Math.max(1, Math.ceil(catTotal / PAGE_SIZE))}</div>
+          <div className="flex items-center gap-2">
+            <Switch id="hide-conflicts" checked={hideConflicts} onCheckedChange={setHideConflicts} />
+            <Label htmlFor="hide-conflicts" className="text-xs text-muted-foreground cursor-pointer">Hide conflicts with my schedule</Label>
+          </div>
           <div className="grid md:grid-cols-2 gap-3">
-            {catRows.map((c) => (
-              <div key={c.code} className="rounded-lg border p-3 flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="font-medium text-sm truncate">{c.name}</div>
-                  <div className="text-xs font-mono text-muted-foreground">{c.code} · {c.ects ?? "?"} ECTS · {c.faculty ?? c.source}</div>
+            {catRows
+              .map((c) => ({ c, fit: checkFit(c, events as any) }))
+              .filter(({ fit }) => !(hideConflicts && fit.status === "conflicts"))
+              .map(({ c, fit }) => (
+                <div key={c.code} className="rounded-lg border p-3 flex items-start justify-between gap-2">
+                  <div className="min-w-0 space-y-1">
+                    <div className="font-medium text-sm truncate">{c.name}</div>
+                    <div className="text-xs font-mono text-muted-foreground">{c.code} · {c.ects ?? "?"} ECTS · {c.faculty ?? c.source}</div>
+                    <FitBadge fit={fit} />
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => handleAddCatalog(c)} title="Add to my programme">
+                    <Plus className="size-3 mr-1" /> Add
+                  </Button>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => addToCurriculum(c)} title="Add to my programme">
-                  <Plus className="size-3 mr-1" /> Add
-                </Button>
-              </div>
-            ))}
+              ))}
             {!catLoading && catRows.length === 0 && <div className="text-sm text-muted-foreground">No matches.</div>}
           </div>
           <div className="flex justify-center gap-2">
@@ -319,6 +383,26 @@ export default function Courses() {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!pendingConflict} onOpenChange={(o) => { if (!o) setPendingConflict(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Schedule conflict</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingConflict && (
+                <>This course overlaps with: {pendingConflict.titles.slice(0, 3).join(", ")}{pendingConflict.titles.length > 3 ? "…" : ""}. Add it anyway?</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (pendingConflict) addToCurriculum(pendingConflict.course);
+              setPendingConflict(null);
+            }}>Add anyway</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
