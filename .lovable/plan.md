@@ -1,19 +1,27 @@
 
 
-# Move "Choose your goal" heading
+# Switch career page copy to second-person English ("you" form)
 
-Move the **"Choose your goal"** heading out of `BottleDiagram.tsx` and place it directly under the **"Closing your career gap"** card title in `Career.tsx`, so it sits at the top of the section (above the diagram) as a sub-heading of that card.
+Update user-facing strings on the Career page to address the user directly in English, using "you/your" phrasing.
 
-## Changes
+## Changes in `src/pages/Career.tsx`
 
-- **`src/components/app/BottleDiagram.tsx`** — remove the `<h3>Choose your goal</h3>` and the wrapping `space-y-3` div added previously. Component goes back to rendering just the diagram + side panel grid.
-- **`src/pages/Career.tsx`** — in the "Closing your career gap" `Card`, add a short sub-heading/description above `<BottleDiagram />` inside `CardContent`:
-  ```tsx
-  <CardContent className="space-y-3">
-    <h3 className="text-sm font-semibold text-foreground">Choose your goal</h3>
-    <BottleDiagram ... />
-  </CardContent>
-  ```
+- Page subtitle:
+  - From: "Map your CV and interests to ranked career paths — with explainable reasoning."
+  - To: "You can map your CV and interests to ranked career paths — with clear reasoning you can follow."
+- Card title "Your CV" → keep (already second-person).
+- Upload helper text "or paste below" → "or paste yours below".
+- Textarea placeholder "Paste your CV text here…" → "Paste your CV text here so we can analyze it…".
+- Toasts:
+  - "We ranked the best career paths for you." → "Here are the best career paths for you, ranked."
+  - "Timetable updated with recommended courses." → "Your timetable is updated with the recommended courses."
+  - "CV loaded" description → "We extracted {n} characters from {file}. Click 'Run AI analysis' when you're ready."
+- Section heading "Closing your career gap" → "Closing your career gap" (already fine; add second-person sub-line in `CardContent` above the existing "Choose your goal" h2 area — actually keep card title, no change).
+- Section heading "Choose your goal" → "Choose your goal" (imperative second-person, already fine).
+- Small labels:
+  - "Gaps to close" → "Gaps you should close"
+  - "Recommended courses" → "Courses we recommend for you"
+- Selected toast: `Selected ${r.name}` → `You picked ${r.name}`.
 
-No other behavior changes.
+No logic, layout, or component changes — text only. No other files touched.
 
