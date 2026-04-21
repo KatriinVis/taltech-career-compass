@@ -1,0 +1,17 @@
+[
+  {"code":"ETQ-AI01","name":"Trustworthy AI (TU München)","ects":3,"university":"TU München","format":"online","skills":["ai","ethics","ml"]},
+  {"code":"ETQ-RB02","name":"Autonomous Robotics (DTU)","ects":5,"university":"DTU","format":"hybrid","skills":["robotics","ros","autonomy"]},
+  {"code":"ETQ-DS03","name":"Applied Data Science (École Polytechnique)","ects":5,"university":"École Polytechnique","format":"online","skills":["data-science","python","statistics"]},
+  {"code":"ETQ-CY04","name":"Modern Cryptography (EPFL)","ects":4,"university":"EPFL","format":"online","skills":["cryptography","security"]},
+  {"code":"ETQ-EN05","name":"Sustainable Energy Systems (Eindhoven)","ects":4,"university":"TU/e","format":"online","skills":["energy","sustainability","engineering"]},
+  {"code":"ETQ-PM06","name":"Product Innovation (CTU Prague)","ects":3,"university":"CTU Prague","format":"online","skills":["product","innovation","design-thinking"]},
+  {"code":"ETQ-QC07","name":"Intro to Quantum Computing (TU München)","ects":4,"university":"TU München","format":"online","skills":["quantum","physics","math"]},
+  {"code":"ETQ-CV08","name":"Computer Vision Foundations (EPFL)","ects":5,"university":"EPFL","format":"hybrid","skills":["computer-vision","ml","python"]},
+  {"code":"ETQ-CL09","name":"Cloud-Native Architectures (DTU)","ects":4,"university":"DTU","format":"online","skills":["cloud","kubernetes","devops"]},
+  {"code":"ETQ-UX10","name":"Inclusive UX Research (École Polytechnique)","ects":3,"university":"École Polytechnique","format":"online","skills":["ux","research","accessibility"]},
+  {"code":"ETQ-NL11","name":"Natural Language Processing (TU/e)","ects":5,"university":"TU/e","format":"online","skills":["nlp","ml","python"]},
+  {"code":"ETQ-IO12","name":"Industrial IoT (CTU Prague)","ects":4,"university":"CTU Prague","format":"online","skills":["iot","embedded","networking"]},
+  {"code":"ETQ-BC13","name":"Blockchain & Distributed Systems (EPFL)","ects":4,"university":"EPFL","format":"online","skills":["blockchain","distributed-systems"]},
+  {"code":"ETQ-EN14","name":"Engineering Leadership (TU München)","ects":3,"university":"TU München","format":"online","skills":["leadership","management","communication"]},
+  {"code":"ETQ-GR15","name":"Green Software Engineering (DTU)","ects":3,"university":"DTU","format":"online","skills":["sustainability","software-engineering"]}
+]
