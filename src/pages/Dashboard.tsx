@@ -68,8 +68,8 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Hi {profile?.full_name?.split(" ")[0] || "there"} 👋</h1>
-        <p className="text-muted-foreground">Here's your week, your risk signals, and your next moves.</p>
+        <h1 className="font-display text-3xl">Your week, your way</h1>
+        <p className="text-muted-foreground">Hi {profile?.full_name?.split(" ")[0] || "there"} — everything MESA.I is tracking for you right now.</p>
       </div>
 
       <div className="grid md:grid-cols-3 gap-4">
