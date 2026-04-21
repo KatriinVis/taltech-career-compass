@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
       headers: { "api-key": AZURE_OPENAI_API_KEY, "Content-Type": "application/json" },
       body: JSON.stringify({
         messages: [
-          { role: "system", content: "You are a TalTech career advisor. Rank the top 3-5 career paths for this student. Use explainable reasoning citing specific CV signals + interests. Be honest about gaps." },
+          { role: "system", content: "You are a TalTech career advisor. Rank the top 3-5 career paths for this student. Use explainable reasoning citing specific CV signals + interests. Be honest about gaps. Always respond in English, even if the CV, interests, or any other input is written in another language (e.g. Estonian). All `reasoning` text and every item in `gaps` must be written in natural English." },
           { role: "user", content: JSON.stringify(userPayload) },
         ],
         tools: [{
@@ -49,8 +49,8 @@ Deno.serve(async (req) => {
                       id: { type: "string" },
                       name: { type: "string" },
                       score: { type: "number", description: "0-100 match score" },
-                      reasoning: { type: "string", description: "1-3 sentences explaining the match using CV+interests evidence." },
-                      gaps: { type: "array", items: { type: "string" }, description: "Skills the student should build." },
+                      reasoning: { type: "string", description: "1-3 sentences in English explaining the match using CV+interests evidence." },
+                      gaps: { type: "array", items: { type: "string", description: "Short English skill label (e.g. 'SQL', 'Public speaking', 'Distributed systems'). Never use Estonian." }, description: "Skills the student should build, in English." },
                     },
                     required: ["id","name","score","reasoning","gaps"],
                     additionalProperties: false,

@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
       headers: { "api-key": AZURE_OPENAI_API_KEY, "Content-Type": "application/json" },
       body: JSON.stringify({
         messages: [
-          { role: "system", content: "Extract structured info from a student's CV. Be concise. Use lowercase kebab-case skill tags (e.g. 'python','machine-learning','sql')." },
+          { role: "system", content: "Extract structured info from a student's CV. Be concise. Use lowercase kebab-case skill tags (e.g. 'python','machine-learning','sql'). Always write `summary`, `experience`, `education`, and `interests` in English, even if the CV is in another language. Translate Estonian (or any non-English) content to English before returning." },
           { role: "user", content: raw_text },
         ],
         tools: [{
