@@ -177,6 +177,10 @@ export type Database = {
           interests: string[] | null
           onboarded: boolean | null
           program: string | null
+          programme_code: string | null
+          programme_name: string | null
+          target_ects: number | null
+          target_graduation: string | null
           updated_at: string
           year: number | null
         }
@@ -187,6 +191,10 @@ export type Database = {
           interests?: string[] | null
           onboarded?: boolean | null
           program?: string | null
+          programme_code?: string | null
+          programme_name?: string | null
+          target_ects?: number | null
+          target_graduation?: string | null
           updated_at?: string
           year?: number | null
         }
@@ -197,6 +205,10 @@ export type Database = {
           interests?: string[] | null
           onboarded?: boolean | null
           program?: string | null
+          programme_code?: string | null
+          programme_name?: string | null
+          target_ects?: number | null
+          target_graduation?: string | null
           updated_at?: string
           year?: number | null
         }
@@ -307,6 +319,69 @@ export type Database = {
           source?: string
           status?: string
           updated?: number | null
+        }
+        Relationships: []
+      }
+      user_courses: {
+        Row: {
+          assessment: string | null
+          code: string
+          created_at: string
+          ects: number | null
+          id: string
+          kind: string | null
+          learning_outcomes: string[] | null
+          name: string
+          prerequisites: string[] | null
+          raw_text: string | null
+          semester: string | null
+          skills: string[] | null
+          source_filename: string | null
+          status: string
+          topics: string[] | null
+          updated_at: string
+          user_id: string
+          workload: Json | null
+        }
+        Insert: {
+          assessment?: string | null
+          code: string
+          created_at?: string
+          ects?: number | null
+          id?: string
+          kind?: string | null
+          learning_outcomes?: string[] | null
+          name: string
+          prerequisites?: string[] | null
+          raw_text?: string | null
+          semester?: string | null
+          skills?: string[] | null
+          source_filename?: string | null
+          status?: string
+          topics?: string[] | null
+          updated_at?: string
+          user_id: string
+          workload?: Json | null
+        }
+        Update: {
+          assessment?: string | null
+          code?: string
+          created_at?: string
+          ects?: number | null
+          id?: string
+          kind?: string | null
+          learning_outcomes?: string[] | null
+          name?: string
+          prerequisites?: string[] | null
+          raw_text?: string | null
+          semester?: string | null
+          skills?: string[] | null
+          source_filename?: string | null
+          status?: string
+          topics?: string[] | null
+          updated_at?: string
+          user_id?: string
+          workload?: Json | null
         }
         Relationships: []
       }
