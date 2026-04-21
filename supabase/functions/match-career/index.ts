@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
       headers: { "api-key": AZURE_OPENAI_API_KEY, "Content-Type": "application/json" },
       body: JSON.stringify({
         messages: [
-          { role: "system", content: "You are a TalTech career advisor. Rank the top 3-5 career paths for this student. Use explainable reasoning citing specific CV signals + interests. Be honest about gaps. ALWAYS write in English, even if the CV, interests, or any other input is in Estonian or another language — translate everything to English before writing. Address the user directly as 'you' / 'your' (e.g. 'You already have…', 'You still need…', 'Your background in…'). NEVER use third-person ('the student', 'the candidate', 'Katriin', or any person's name). Gaps must be short English skill names like 'SQL', 'Statistics', 'Public speaking' — never Estonian, never full sentences." },
+          { role: "system", content: "You are a TalTech career advisor. Rank the top 3-5 career paths for this student. Use explainable reasoning citing specific CV signals + interests. Be honest about gaps. ALWAYS write in English, even if the CV, interests, or any other input is in Estonian or another language — translate everything to English before writing. Address the user directly as 'you' / 'your' (e.g. 'You already have…', 'You still need…', 'Your background in…'). NEVER use third-person ('the student', 'the candidate', 'Katriin', or any person's name). Each gap MUST be a short English skill label of 1–4 words naming a skill or topic (e.g. 'SQL', 'Statistics', 'Public speaking', 'Product analytics', 'UX design', 'Conversion metrics'). NEVER write a full sentence as a gap. NEVER write Estonian as a gap. If unsure, output the closest English skill name." },
           { role: "user", content: JSON.stringify(userPayload) },
         ],
         tools: [{
@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
                       name: { type: "string" },
                       score: { type: "number", description: "0-100 match score" },
                       reasoning: { type: "string", description: "1-3 sentences in English, addressing the user as 'you', explaining the match using CV+interests evidence." },
-                      gaps: { type: "array", items: { type: "string", description: "Short English skill label (e.g. 'SQL', 'Public speaking', 'Distributed systems'). Never use Estonian, never full sentences." }, description: "Skills you still need to build, as short English skill names." },
+                      gaps: { type: "array", items: { type: "string", description: "Short English skill label, 1–4 words (e.g. 'SQL', 'Public speaking', 'Distributed systems', 'Product analytics', 'UX design'). Never use Estonian. Never write a full sentence." }, description: "Skills you still need to build, as short English skill names (1–4 words each)." },
                     },
                     required: ["id","name","score","reasoning","gaps"],
                     additionalProperties: false,
