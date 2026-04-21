@@ -21,6 +21,33 @@ const SKILL_VOCAB = [
   "ethics","ml","autonomy","innovation","design-thinking","kubernetes",
 ];
 
+// Magistri-taseme prefiksid teaduskondade kaupa
+const MSC_BATCHES: Record<string, string[]> = {
+  it: ["ITI", "ITA", "ITC", "ITV", "ITP"],
+  eng: ["MAT", "MEC", "EER", "EMR", "EAA"],
+  biz: ["TMJ", "YFR", "EJR"],
+};
+const ALL_MSC_PREFIXES = Object.values(MSC_BATCHES).flat();
+
+const FACULTY_MAP: Record<string, string> = {
+  IT: "IT-teaduskond", ITI: "IT-teaduskond", ITA: "IT-teaduskond",
+  ITC: "IT-teaduskond", ITV: "IT-teaduskond", ITP: "IT-teaduskond",
+  MAT: "Loodusteadused", MEC: "Inseneriteadused", EER: "Inseneriteadused",
+  EMR: "Inseneriteadused", EAA: "Inseneriteadused",
+  TMJ: "Majandus", YFR: "Majandus", EJR: "Majandus",
+};
+
+function isMscCode(code: string): boolean {
+  // Magistri-ained: 4. number on 8 või 9 (nt ITC8101, MEC9020)
+  return /^[A-Z]{2,4}[89]\d{3}$/.test(code);
+}
+
+function facultyFromCode(code: string): string | null {
+  const m = code.match(/^([A-Z]{2,4})/);
+  if (!m) return null;
+  return FACULTY_MAP[m[1]] ?? null;
+}
+
 function deriveSkills(text: string): string[] {
   if (!text) return [];
   const t = text.toLowerCase();
