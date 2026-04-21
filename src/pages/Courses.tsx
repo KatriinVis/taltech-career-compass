@@ -320,18 +320,26 @@ export default function Courses() {
             )}
           </div>
           <div className="text-xs text-muted-foreground">{catTotal} courses found · page {catPage + 1}/{Math.max(1, Math.ceil(catTotal / PAGE_SIZE))}</div>
+          <div className="flex items-center gap-2">
+            <Switch id="hide-conflicts" checked={hideConflicts} onCheckedChange={setHideConflicts} />
+            <Label htmlFor="hide-conflicts" className="text-xs text-muted-foreground cursor-pointer">Hide conflicts with my schedule</Label>
+          </div>
           <div className="grid md:grid-cols-2 gap-3">
-            {catRows.map((c) => (
-              <div key={c.code} className="rounded-lg border p-3 flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="font-medium text-sm truncate">{c.name}</div>
-                  <div className="text-xs font-mono text-muted-foreground">{c.code} · {c.ects ?? "?"} ECTS · {c.faculty ?? c.source}</div>
+            {catRows
+              .map((c) => ({ c, fit: checkFit(c, events as any) }))
+              .filter(({ fit }) => !(hideConflicts && fit.status === "conflicts"))
+              .map(({ c, fit }) => (
+                <div key={c.code} className="rounded-lg border p-3 flex items-start justify-between gap-2">
+                  <div className="min-w-0 space-y-1">
+                    <div className="font-medium text-sm truncate">{c.name}</div>
+                    <div className="text-xs font-mono text-muted-foreground">{c.code} · {c.ects ?? "?"} ECTS · {c.faculty ?? c.source}</div>
+                    <FitBadge fit={fit} />
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => handleAddCatalog(c)} title="Add to my programme">
+                    <Plus className="size-3 mr-1" /> Add
+                  </Button>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => addToCurriculum(c)} title="Add to my programme">
-                  <Plus className="size-3 mr-1" /> Add
-                </Button>
-              </div>
-            ))}
+              ))}
             {!catLoading && catRows.length === 0 && <div className="text-sm text-muted-foreground">No matches.</div>}
           </div>
           <div className="flex justify-center gap-2">
