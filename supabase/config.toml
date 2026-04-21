@@ -1,10 +1,10 @@
 project_id = "twgqeygkwlrmdbxbsvqq"
 
 [functions.analyze-cv]
-verify_jwt = true
+verify_jwt = false
 
 [functions.match-career]
-verify_jwt = true
+verify_jwt = false
 
 [functions.coach]
-verify_jwt = true
+verify_jwt = false
