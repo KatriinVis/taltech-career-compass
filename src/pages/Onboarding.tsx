@@ -177,8 +177,76 @@ export default function Onboarding() {
             <Textarea rows={10} value={cv} onChange={(e) => setCv(e.target.value)} placeholder="Education, projects, skills, experience…" />
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setStep(2)}>Back</Button>
+              {cv.trim().length >= 50 ? (
+                <Button className="flex-1" onClick={analyzePreview} disabled={analyzing}>
+                  {analyzing ? "Analyzing CV…" : "Preview parsed CV"}
+                </Button>
+              ) : (
+                <Button className="flex-1" variant="secondary" onClick={skipPreview}>
+                  Skip CV
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Review what we found</h2>
+            {extracted ? (
+              <>
+                <div className="rounded-lg border bg-secondary/40 p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Confidence</span>
+                    <span className="text-sm font-semibold">{confidence}%</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-secondary overflow-hidden">
+                    <div className="h-full bg-primary transition-all" style={{ width: `${confidence}%` }} />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {confidence >= 70 ? "Looks comprehensive — great signal for your plan." :
+                     confidence >= 40 ? "Decent signal. Add more detail later for sharper recommendations." :
+                     "Limited signal — consider pasting more of your CV for better matches."}
+                  </p>
+                </div>
+
+                {extracted.summary && (
+                  <div>
+                    <Label>Summary</Label>
+                    <p className="text-sm text-muted-foreground mt-1">{extracted.summary}</p>
+                  </div>
+                )}
+
+                {extracted.skills && extracted.skills.length > 0 && (
+                  <div>
+                    <Label>Detected skills ({extracted.skills.length})</Label>
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {extracted.skills.map((s) => (
+                        <span key={s} className="px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary border border-primary/20">
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {extracted.experience && extracted.experience.length > 0 && (
+                  <div>
+                    <Label>Experience ({extracted.experience.length})</Label>
+                    <ul className="text-sm text-muted-foreground mt-1 list-disc pl-5 space-y-0.5">
+                      {extracted.experience.slice(0, 4).map((e, i) => <li key={i}>{e}</li>)}
+                    </ul>
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="text-sm text-muted-foreground">No CV provided — you can add one later from Settings.</p>
+            )}
+
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" onClick={() => setStep(3)}>Back</Button>
               <Button className="flex-1" onClick={finish} disabled={saving}>
-                {saving ? "Setting up…" : "Finish"}
+                {saving ? "Setting up…" : "Generate my plan"}
               </Button>
             </div>
           </div>
