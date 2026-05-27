@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import MesaLogo from "@/components/MesaLogo";
+import CareerTableLogo from "@/components/CareerTableLogo";
 
 const INTERESTS = [
   "AI / ML", "Data Science", "Cybersecurity", "Robotics", "Cloud / DevOps",
@@ -113,8 +113,8 @@ export default function Onboarding() {
     <div className="min-h-screen bg-background grid place-items-center p-6">
       <div className="w-full max-w-xl rounded-xl border bg-card p-8" style={{ boxShadow: "var(--shadow-elegant)" }}>
         <div className="mb-6">
-          <MesaLogo size="md" />
-          <h1 className="font-display text-xl mt-3">Welcome to MESA.I</h1>
+          <CareerTableLogo size="md" />
+          <h1 className="font-display text-xl mt-3">Welcome to Career-table</h1>
           <p className="text-sm text-muted-foreground">Three quick steps and we'll build your career-driven timetable.</p>
         </div>
         <div className="flex gap-2 mb-6">

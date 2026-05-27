@@ -83,10 +83,67 @@ export default {
             height: "0",
           },
         },
+        float: {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-6px)" },
+        },
+        wiggle: {
+          "0%, 100%": { transform: "rotate(-6deg)" },
+          "50%": { transform: "rotate(6deg)" },
+        },
+        "spin-slow": {
+          from: { transform: "rotate(0deg)" },
+          to: { transform: "rotate(360deg)" },
+        },
+        shimmer: {
+          "0%": { "background-position": "0% center" },
+          "100%": { "background-position": "200% center" },
+        },
+        pop: {
+          "0%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.15)" },
+          "100%": { transform: "scale(1)" },
+        },
+        blob: {
+          "0%, 100%": { transform: "translate(0px, 0px) scale(1)" },
+          "33%": { transform: "translate(30px, -40px) scale(1.1)" },
+          "66%": { transform: "translate(-20px, 20px) scale(0.95)" },
+        },
+        tassel: {
+          "0%, 100%": { transform: "rotate(-8deg)" },
+          "50%": { transform: "rotate(8deg)" },
+        },
+        "sparkle-1": {
+          "0%, 100%": { opacity: "0", transform: "scale(0.5)" },
+          "50%": { opacity: "1", transform: "scale(1.2)" },
+        },
+        "sparkle-2": {
+          "0%, 100%": { opacity: "1", transform: "scale(1)" },
+          "50%": { opacity: "0.3", transform: "scale(0.6)" },
+        },
+        "sparkle-3": {
+          "0%, 100%": { opacity: "0.4", transform: "scale(0.8)" },
+          "50%": { opacity: "1", transform: "scale(1.3)" },
+        },
+        "fade-in": {
+          "0%": { opacity: "0", transform: "translateY(10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        float: "float 3s ease-in-out infinite",
+        wiggle: "wiggle 0.5s ease-in-out infinite",
+        "spin-slow": "spin-slow 8s linear infinite",
+        shimmer: "shimmer 4s linear infinite",
+        pop: "pop 0.4s ease-in-out",
+        blob: "blob 12s ease-in-out infinite",
+        tassel: "tassel 2s ease-in-out infinite",
+        "sparkle-1": "sparkle-1 2s ease-in-out infinite",
+        "sparkle-2": "sparkle-2 2.4s ease-in-out infinite 0.3s",
+        "sparkle-3": "sparkle-3 1.8s ease-in-out infinite 0.6s",
+        "fade-in": "fade-in 0.5s ease-out",
       },
     },
   },

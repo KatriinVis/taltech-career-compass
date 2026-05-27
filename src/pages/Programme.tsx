@@ -168,7 +168,7 @@ export default function Programme() {
     <div className="space-y-6 max-w-4xl">
       <div>
         <h1 className="font-display text-3xl">My programme</h1>
-        <p className="text-muted-foreground">Your personal courses uploaded into MESA.I.</p>
+        <p className="text-muted-foreground">Your personal courses uploaded into Career-table.</p>
       </div>
 
       <Card>

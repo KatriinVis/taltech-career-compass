@@ -3,7 +3,7 @@ import { BookOpen, Calendar, Compass, GraduationCap, LayoutDashboard, LogOut, Se
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import MesaLogo from "@/components/MesaLogo";
+import CareerTableLogo from "@/components/CareerTableLogo";
 
 const nav = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -22,7 +22,7 @@ export default function AppLayout() {
     <div className="min-h-screen bg-background flex">
       <aside className="hidden md:flex w-60 flex-col border-r bg-card">
         <div className="p-6">
-          <MesaLogo size="md" />
+          <CareerTableLogo size="md" />
           <div className="text-xs text-muted-foreground mt-2">Career-driven smart timetable</div>
         </div>
         <nav className="flex-1 px-3 space-y-1">
@@ -32,10 +32,10 @@ export default function AppLayout() {
               to={n.to}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors border-l-2",
+                  "flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all hover:translate-x-0.5",
                   isActive
-                    ? "bg-secondary text-primary font-medium border-primary"
-                    : "text-foreground/70 border-transparent hover:bg-secondary hover:text-foreground"
+                    ? "bg-vapor text-primary-foreground font-semibold shadow-md"
+                    : "text-foreground/70 hover:bg-secondary hover:text-foreground"
                 )
               }
             >
@@ -58,7 +58,7 @@ export default function AppLayout() {
       </aside>
       <main className="flex-1 min-w-0">
         <div className="md:hidden flex items-center justify-between p-4 border-b bg-card">
-          <MesaLogo size="sm" />
+          <CareerTableLogo size="sm" />
           <Button variant="ghost" size="sm" onClick={async () => { await signOut(); navigate("/"); }}>
             <LogOut className="size-4" />
           </Button>
