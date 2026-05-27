@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { z } from "zod";
-import MesaLogo from "@/components/MesaLogo";
+import CareerTableLogo from "@/components/CareerTableLogo";
 
 const schema = z.object({
   email: z.string().email("Invalid email").max(255),
@@ -56,12 +56,14 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen grid place-items-center bg-background p-6">
-      <div className="w-full max-w-md rounded-xl border bg-card p-8" style={{ boxShadow: "var(--shadow-elegant)" }}>
+    <div className="min-h-screen grid place-items-center bg-background p-6 relative overflow-hidden">
+      <div className="pointer-events-none absolute -top-20 -left-20 w-80 h-80 rounded-full bg-accent/40 blur-3xl animate-blob" />
+      <div className="pointer-events-none absolute -bottom-20 -right-20 w-96 h-96 rounded-full bg-primary-glow/40 blur-3xl animate-blob" style={{ animationDelay: "3s" }} />
+      <div className="relative w-full max-w-md rounded-2xl border bg-card/90 backdrop-blur p-8 animate-fade-in" style={{ boxShadow: "var(--shadow-elegant)" }}>
         <Link to="/" className="inline-flex mb-6">
-          <MesaLogo size="md" />
+          <CareerTableLogo size="md" />
         </Link>
-        <h1 className="font-display text-2xl mb-1">{mode === "signup" ? "Join MESA.I" : "Welcome back to MESA.I"}</h1>
+        <h1 className="font-display text-3xl mb-1 tracking-wide">{mode === "signup" ? "Join Career-table" : "Welcome back"}</h1>
         <p className="text-sm text-muted-foreground mb-6">
           {mode === "signup" ? "Let's connect your studies to your career." : "Pick up where you left off."}
         </p>
