@@ -113,7 +113,7 @@ export default function Onboarding() {
     <div className="min-h-screen bg-background grid place-items-center p-6">
       <div className="w-full max-w-xl rounded-xl border bg-card p-8" style={{ boxShadow: "var(--shadow-elegant)" }}>
         <div className="mb-6">
-          <MesaLogo size="md" />
+          <CareerTableLogo size="md" />
           <h1 className="font-display text-xl mt-3">Welcome to Career-table</h1>
           <p className="text-sm text-muted-foreground">Three quick steps and we'll build your career-driven timetable.</p>
         </div>
