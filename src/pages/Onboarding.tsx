@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import MesaLogo from "@/components/MesaLogo";
+import CareerTableLogo from "@/components/CareerTableLogo";
 
 const INTERESTS = [
   "AI / ML", "Data Science", "Cybersecurity", "Robotics", "Cloud / DevOps",
