@@ -140,7 +140,7 @@ export default function AssistantDrawer({ open, onOpenChange }: { open: boolean;
       <SheetContent side="right" className="w-full sm:max-w-md flex flex-col p-0">
         <SheetHeader className="px-6 py-4 border-b">
           <SheetTitle className="flex items-center gap-2">
-            <Sparkles className="size-4 text-primary" /> MESA.I Assistant
+            <Sparkles className="size-4 text-primary" /> Career-table Assistant
           </SheetTitle>
         </SheetHeader>
 

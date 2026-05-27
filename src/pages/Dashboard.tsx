@@ -64,7 +64,7 @@ export default function Dashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl">Your week, your way</h1>
-        <p className="text-muted-foreground">Hi {profile?.full_name?.split(" ")[0] || "there"} — everything MESA.I is tracking for you right now.</p>
+        <p className="text-muted-foreground">Hi {profile?.full_name?.split(" ")[0] || "there"} — everything Career-table is tracking for you right now.</p>
       </div>
 
       <div className="grid md:grid-cols-3 gap-4">

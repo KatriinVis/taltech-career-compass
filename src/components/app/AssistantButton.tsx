@@ -14,7 +14,7 @@ export default function AssistantButton() {
         aria-label="Open assistant"
       >
         <Sparkles className="size-5" />
-        <span className="hidden md:inline">Ask MESA.I</span>
+        <span className="hidden md:inline">Ask Career-table</span>
       </Button>
       <AssistantDrawer open={open} onOpenChange={setOpen} />
     </>

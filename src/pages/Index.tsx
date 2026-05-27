@@ -6,7 +6,7 @@ import CareerTableLogo from "@/components/CareerTableLogo";
 
 const features = [
   { icon: GraduationCap, title: "Degree", body: "See your full program at a glance. Track ECTS, required courses, and what's left." },
-  { icon: Lightbulb, title: "Skills", body: "Grow beyond the syllabus. MESA.I surfaces seminars, hackathons, and electives that build the skills you need." },
+  { icon: Lightbulb, title: "Skills", body: "Grow beyond the syllabus. Career-table surfaces seminars, hackathons, and electives that build the skills you need." },
   { icon: Compass, title: "Career", body: "Pick courses that lead somewhere. Upload your CV, set a goal, get a ranked plan." },
 ];
 
